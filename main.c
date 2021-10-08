@@ -4,9 +4,19 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-int main()
+int main(int argc, char* argv[])
 {
-    for(int i=0;i<5;i++) // Generer 5 fis
+    if(argc!=2){
+        fprintf(stderr,"Argument insufisant\n");
+	exit(-1);
+    }
+    int nbFis;
+    nbFis=atoi(argv[1]);
+    if(nbFis==-1){
+        fprintf(stderr,"Ce n'est pas un nb\n");
+	exit(-1);
+    }
+    for(int i=0;i<nbFis;i++) // Generer 5 fis
     {
         if(fork() == 0)
         {
@@ -14,7 +24,6 @@ int main()
             exit(0);
         }
     }
-    for(int i=0;i<5;i++) // attendre la génération des fis
-    wait(NULL);
+    while(wait(NULL)!=-1);
     return 0;
 }
