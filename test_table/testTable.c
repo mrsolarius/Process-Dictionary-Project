@@ -34,6 +34,7 @@ int main() {
                 if (value == NULL) {
                     printf("Pas de valeur trouvee");
                 }
+                break;
             case 3:
                 display(tabletest);
                 break;
