@@ -97,4 +97,5 @@ DETAIL DES DONNEES TRANSMISE :
 
     END FRAME :
         La end FRAME permet de savoir quand es que le flux de donné se termine.
-        * 0x84 : END FRAME : Cette valeur et connue et sera toujours la même pour terminer la transmition de données
+        * 0x04 : END FRAME : Cette valeur et connue et sera toujours la même pour terminer la transmition de donné. 
+                             Elle correspond au characters ASCII end of transmission (EOF) 
