@@ -6,31 +6,59 @@
 #define PROCESS_DICTIONARY_PROJECT_DDP_H
 
 /**
- * Définis la fin d'une trame
+ * Equivalent grossier de errno pour récupérer les erreurs interne de DDP
  */
-const unsigned char END_FRAME = 0x04;
+extern int DDP_Errno;
 
 /**
- * Toutes les commandes de demande de DDP
+ * Enum de toutes les erreurs
  */
-const unsigned char C_SET = 0xA1;
-const unsigned char C_LOOKUP = 0xB1;
-const unsigned char C_DUMP = 0xD1;
-const unsigned char C_EXIT = 0xE1;
+enum DDP_errCode {
+    ENOTDDP=0x0,
+    EBADCMD=0x1,
+    EBADNODE=0x2,
+    EWRONGEFLAG=0x3,
+    EWRONGSFLAG=0x4,
+    EWRONGLEN=0x5,
+    ENOENDFLAG=0x6,
+    ENOTASK=0x7,
+    ENOTAQIT=0x8,
+};
+
+extern const char * DDP_errList[];
 
 /**
- * Toutes les commandes d'acquittement de DDP
+ * Enum de toutes les frames
  */
-const unsigned char A_SET = 0xA2;
-const unsigned char A_LOOKUP = 0xB2;
-const unsigned char A_DUMP = 0xD2;
+enum frameComponents {
+    /**
+     * Définis la fin d'une trame
+     */
+    END_FRAME=0x04,
 
-/**
- * Tous les drapeau d'erreur de DDP
- */
-const unsigned char SUCCESS = 0x20;
-const unsigned char NOT_FOUND = 0x44;
-const unsigned char INTERNAL_ERROR = 0x50;
+
+    /**
+     * Toutes les commandes de demande de DDP
+     */
+    C_SET=0xA1,
+    C_LOOKUP=0xB1,
+    C_DUMP=0xD1,
+    C_EXIT=0xE1,
+
+    /**
+     * Toutes les commandes d'acquittement de DDP
+     */
+    A_SET=0xA2,
+    A_LOOKUP=0xB2,
+    A_DUMP=0xD2,
+
+    /**
+     * Tous les drapeau d'erreur de DDP
+     */
+    SUCCESS=0x20,
+    NOT_FOUND=0x44,
+    INTERNAL_ERROR=0x50
+};
 
 /**
  * Definition du type de la trame de demande
@@ -67,7 +95,7 @@ typedef AcquittalFrame *PAcquittalFrame;
  *          0x01 si c'est une trame de type ASK
  *          0x02 si c'est une trame de type ACQUITTAL
  *
- *      Si l'operation est un échèque la fonction renvera -1 et errno sera definie et positioner de manière approprier
+ *      Si l'operation est un échèque la fonction renvera -1 et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
  *      EBADCMD     Là commande demander ne correspond pas à la trame identifier
@@ -75,7 +103,7 @@ typedef AcquittalFrame *PAcquittalFrame;
  *      EWRONGEFLAG Le drapeau indique une erreur mais une data est présente
  *      EWRONGSFLAG Le drapeau indique un succes mais aucune data est présente
  *      EWRONGLEN   La longueur de data indique ne corespond pas à celle de la data
- *      NOTENDFLAG  Aucun drapeau de fin de trame n'a était identifier
+ *      ENOENDFLAG  Aucun drapeau de fin de trame n'a était identifier
  */
 char evaluateFrame(char *frame);
 
@@ -89,7 +117,7 @@ char evaluateFrame(char *frame);
  * Valeur de retour :
  *      Si l'operation est un succès la fonction renvois le pointer vers la trame parser de type AskFrame
  *
- *      Si l'opération est un echec la fonction renverra une valeurs NULL et errno sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra une valeurs NULL et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      ENOTASK Là trame envoyer n'est pas une trame de type ASK
  *
@@ -107,7 +135,7 @@ PAskFrame decodeAskFrame(char *frame);
  * Valeur de retour :
  *      Si l'operation est un succès la fonction renvois le pointer vers la trame parser de type AskFrame
  *
- *      Si l'opération est un echec la fonction renverra une valeurs NULL et errno sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra une valeurs NULL et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      ENOTAQIT Là trame envoyer n'est pas une trame de type ACQUITTAL
  *
@@ -126,7 +154,7 @@ PAcquittalFrame decodeAcquittalFrame(char *frame);
  *      Si l'operation est un succès la fonction renvois une chaine de character correspondent
  *      à la sérialisation d'une ASK FRAME
  *
- *      Si l'opération est un echec la fonction renverra -1 et errno sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra -1 et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      EBADCMD Là commande demander ne correspond pas à la trame identifier
  */
@@ -143,7 +171,7 @@ char *encodeAskFrame(PAskFrame askFrame);
  *      Si l'operation est un succès la fonction renvois une chaine de character correspondent
  *      à la sérialisation d'une ACQUITTAL FRAME
  *
- *      Si l'opération est un echec la fonction renverra -1 et errno sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra -1 et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      EBADCMD     Là commande demander ne correspond pas à la trame identifier
  *      EBADNODE    L'identififant du node est invalide
@@ -152,5 +180,24 @@ char *encodeAskFrame(PAskFrame askFrame);
  *      EWRONGLEN   La longueur de data indique ne correspond pas à celle de la data
  */
 char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame);
+
+/**
+ * Nom :
+ *      DDP_perror - Afficher un message d'erreur de DDP
+ * Description :
+ *      La fonction DDP_perror() affiche un message sur la sortie d'erreur standard, décrivant la dernière erreur rencontrée lors de l'utilisation de DDP.
+ *      D'abord, (si s n'est pas NULL et si *s n'est pas un octet nul), la chaîne de caractère s est imprimée, suivie de deux points (« : »),
+ *      puis le message, suivi d'un saut de ligne.
+ *
+ *      La chaîne de caractères contient généralement le nom de la fonction où s'est produit l'erreur.
+ *      Le numéro d'erreur est obtenu à partir de la variable externe DDP_Errno, qui contient le code d'erreur lorsqu'un problème survient,
+ *      mais qui s'est pas effacée lorsqu'un appel est réussi.
+ *
+ *      La liste globale d'erreurs DDP_errList[] indexée par errno peut être utilisée pour obtenir le message d'erreur sans le saut de ligne.
+ *
+ * Paramètre :
+ *      @param msg correspond a message précédent l'erreur
+ */
+void DDP_perror(char* msg);
 
 #endif //PROCESS_DICTIONARY_PROJECT_DDP_H
