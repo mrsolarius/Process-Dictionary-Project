@@ -29,16 +29,12 @@ Cela veut dire que nous organiserons le flux de communication en trame prédéfi
 
 ### Étude de la structure des données nécessaire à la transition
 
-Nous avons tous d'abord tenter d'identifier les flux de données qui passent par chacun des pipes. De cette façon nous en somme arrive au constat suivant : 
-
+Nous avons tous d'abord tenter d'identifier les flux de données qui passent par chacun des pipes. De cette façon nous en somme arrive au constat suivant :
 * Le contrôleur pose ses questions au premier de ses fils
-
-
 * Les processus fils communiquent entre eux et ceux jusqu'à ce qu'il soit en mesure de répondre.
 * Lorsqu’ils peuvent répondre ils envoient leur réponse au contrôleur.
 
 Ce constat implique deux types de trame :
-
 * Une trame de question
 * Une trame d'acquittement
 
@@ -58,14 +54,14 @@ Pour la fonction lookup nous avons aussi deux informations :
 * La commande, ici lookup
 * L'emplacement de récupération de la valeur
 
-Pour la commande dump nous avons toujours deux informations :  
+Pour la commande dump nous avons toujours deux informations :  
 
 * La commande, ici dump
 * Le nombre de nœuds du système (pour éviter de faire une boucle infinie ou la commande dump ne s'arrête jamais)
 
-Pour la commande exit nous avons une seule commande :  
-
+Pour la commande exit nous avons une seule commande :
 * La commande, ici exit
+
 
 #### Tram d'acquittement
 
@@ -79,13 +75,9 @@ Lorsque la fonction set a été exécuté avec succès nous avons besoin de 3 in
 
 Lorsque la fonction lookup a été exécuté avec succès nous avons besoin de 5 informations pour la traiter :
 
-* La commande, ici lookup 
-
-
+* La commande, ici lookup
 * Le nœud qui a exécuté la commande (afin de savoir qui nous répond)
 * Un drapeau d'erreur (afin de savoir si l'opération a réussi ou pas)
-
-
 * La longueur de la chaine de caractère renvoyée
 * La chaine de caractère trouver
 
@@ -97,15 +89,15 @@ Lorsque la fonction dump a été exécuté avec succès nous avons besoin de 3 i
 
 Lorsque la fonction exit a été exécuté, cela veut dire que le processus est mort, donc nous n'utiliserons pas de trame pour l'acquittement.
 
-### Conception du protocole DDP (Data Dictionary Protocole)
+## Le protocole DDP (Data Dictionary Protocole)
 
 Nous avons identifié lors de la phase d'analyse que nous arions besoin de 2 trame une trame de question, une trame d'acquittement. Afin de répondre physique au besoin des données transférées qui sont multiples nous avons généralisé les attribuer (cela veut dire que les attribue non obligatoire à la transmission de certaines trames on était rapatrié)
 
-#### Structure des trames
+### Structure des trames
 
 Ici, les trame sont montrées sous forme de tableau, on peut lire la longueur de celle ci en nombre de bits et nombre d'octets (bits). Il Faut considérer que l'échelles incrémente de la taille d'une ligne à chaque nouvelle ligne.
 
-##### Trame de question (ASK)
+#### Trame de question (ASK)
 
 ```
 Ask Frame
@@ -118,7 +110,7 @@ Ask Frame
 +-+-+-+-+-+-+-+-+-+
 ```
 
-##### Trame d'acquittement (ACQUITTAL)
+#### Trame d'acquittement (ACQUITTAL)
 
 ```
 0                 1                 2                 3 (octer)
@@ -134,9 +126,9 @@ Ask Frame
 /!\ DATA est de taille indeterminé char c'est un tableau de caractere
 ```
 
-#### Composition des trames
+### Composition des trames
 
-##### ASK trame
+#### ASK trame
 
 Cette trame sera utilisée lorsqu’une donnée est envoyée depuis le contrôleur vers le processus 0
 
@@ -144,13 +136,13 @@ Ensuite en fonction de son contenue le processus 0 passera la trame au processus
 
  S’il est en mesure d'y répondre lui-même
 
-##### ACQUITAL trame
+#### ACQUITAL trame
 
 Cette trame sera utiliser par les processus pour renvoyer des données au contrôleur pour indiquer une fin de traitement ou une erreur d'exécution.
 
-#### Détail des données transmises
+### Détail des données transmises
 
-##### Les commandes (CMD)
+#### Les commandes (CMD)
 
 La commande indique ce que le processus devra faire
 
@@ -159,8 +151,6 @@ La commande indique ce que le processus devra faire
 Le numéro à la fin de la valeur du flag indique la trame dans laquelle la commande peut être transmise.
 
 *  → 1 Correspond à la trame ASK
-
-
 *  → 2 Correspond à la trame ACQUITTAL
 
 Cela simplifiera l'identification du type de trame dans le programme
@@ -181,7 +171,7 @@ Cela simplifiera l'identification du type de trame dans le programme
 *  0xD2 : Acquittement DUMP : Indique au contrôleur que le DUMP à bien été traité
 *  0xE1 : Commande EXIT : Demande au processus de se suicider
 
-##### Identifiant du node (NODE ID)
+#### Identifiant du node (NODE ID)
 
 Le node id correspond à l'identifiant du processus, il est contenu entre 0 et 255 (il n'est pas possible d'avoirs plus de 255 fils pour utiliser ce protocole)
 
@@ -201,7 +191,7 @@ Le node id correspond à l'identifiant du processus, il est contenu entre 0 et 2
 
  
 
-##### Drapeau d'erreur (ERROR FLAG)
+#### Drapeau d'erreur (ERROR FLAG)
 
 Les drapeaux d'erreurs permettent d'indiquer au contrôleur que quelle que chose ne s’est pas bien passé ou au contraire si tout a bien fonctionné.
 
@@ -209,17 +199,17 @@ Les drapeaux d'erreurs permettent d'indiquer au contrôleur que quelle que chose
 *   0x44 : Aucune donnée trouver
 *   0x50 : Une erreur, c’est produit lors de l'exécution du processus
 
-##### Données (DATA) 
+#### Données (DATA) 
 
  Data est utilisée dans nos deux frame ASK et ACQUITTAL pour transmettre des données. Cependant, il n'est pas utiliser de la même façon dans les deux cas.
 
-######  ASK Frame :
+#####  ASK Frame :
 
  Dans cette trame DATA correspond à un unsigned short qui correspond à la clé qui doit être enregistré.
 
 Note : DATA n'est pas obligatoire pour les commandes EXIT, et DUMP.
 
-######  ACQUITTAL Frame :
+#####  ACQUITTAL Frame :
 
  DATA LENGHT : Ici DATA LENGTH correspond à la taille de la donnée contenue dans DATA.
 
@@ -227,7 +217,7 @@ Note : DATA n'est pas obligatoire pour les commandes EXIT, et DUMP.
 
 Note : DATA LENGHT et DATA ne sont pas obligatoire pour les trames SET et DUMP
 
-##### Fin de trame (END FRAME)
+#### Fin de trame (END FRAME)
 
  La END FRAME permet de savoir quand es que le flux de donné se termine.
 
