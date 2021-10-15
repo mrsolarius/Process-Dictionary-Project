@@ -65,15 +65,15 @@ int main(int argc, char *argv[]) {
         pipeArr[i] = (int *) malloc(2 * sizeof(int));
         pipe(pipeArr[i]);
     }
+    
+    int pipeCtrl[2];
+    //On ouvre le pipe en direction du controller
+    pipe(pipeCtrl);
 
     //Injection de la premier valeur au node 0
     int val = 500;
     write(pipeArr[nbFis-1][1],&val,sizeof(int));
 
-    int pipeCtrl[2];
-    //On ouvre le pipe en direction du controller
-    pipe(pipeCtrl);
-    
     for (int i = 0; i < nbFis; i++) // Generer n fis
     {
         //on ne s'occuper ici que des fis pour afficher leur pid et celui de leur père
