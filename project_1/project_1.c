@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
     int pipeCtrl[2];
     //On ouvre le pipe en direction du controller
     pipe(pipeCtrl);
+    
     for (int i = 0; i < nbFis; i++) // Generer n fis
     {
         //on ne s'occuper ici que des fis pour afficher leur pid et celui de leur père
