@@ -19,13 +19,22 @@ enum DDP_errCode {
     EBADNODE=0x2,
     EWRONGEFLAG=0x3,
     EWRONGSFLAG=0x4,
-    EWRONGLEN=0x5,
-    ENOENDFLAG=0x6,
-    ENOTASK=0x7,
-    ENOTAQIT=0x8,
+    EWRONGNFLAG=0x5,
+    EWRONGLEN=0x6,
+    ENOENDFLAG=0x7,
+    ENOTASK=0x8,
+    ENOTAQIT=0x9,
 };
 
 extern const char * DDP_errList[];
+
+/**
+ * Enum des types de frame
+ */
+enum frameType{
+    ASK=1,
+    ACQUITTAL=2
+};
 
 /**
  * Enum de toutes les frames
@@ -65,7 +74,7 @@ enum frameComponents {
  */
 typedef struct _AskFrame {
     unsigned char cmd;
-    unsigned int val;
+    unsigned short val;
 } AskFrame;
 
 typedef AskFrame *PAskFrame;
@@ -77,7 +86,7 @@ typedef struct _AcquittalFrame {
     unsigned char cmd;
     unsigned char nodeID;
     unsigned char errorFlag;
-    unsigned int dataLength;
+    unsigned short dataLength;
     char *data;
 } AcquittalFrame;
 
@@ -98,12 +107,6 @@ typedef AcquittalFrame *PAcquittalFrame;
  *      Si l'operation est un échèque la fonction renvera -1 et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
- *      EBADCMD     Là commande demander ne correspond pas à la trame identifier
- *      EBADNODE    L'identififant du node est invalide
- *      EWRONGEFLAG Le drapeau indique une erreur mais une data est présente
- *      EWRONGSFLAG Le drapeau indique un succes mais aucune data est présente
- *      EWRONGLEN   La longueur de data indique ne corespond pas à celle de la data
- *      ENOENDFLAG  Aucun drapeau de fin de trame n'a était identifier
  */
 char evaluateFrame(char *frame);
 
@@ -119,8 +122,10 @@ char evaluateFrame(char *frame);
  *
  *      Si l'opération est un echec la fonction renverra une valeurs NULL et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
- *      ENOTASK Là trame envoyer n'est pas une trame de type ASK
- *
+ *      ENOTASK    Là trame envoyer n'est pas une trame de type ASK
+ *      EBADCMD    Là commande demander ne correspond pas à la trame identifier
+ *      ENOENDFLAG Aucun drapeau de fin de trame n'a était identifier
+ *          
  *      les erreur de evaluateFrame() peuvent êtres renvoyer des erreur ici
  */
 PAskFrame decodeAskFrame(char *frame);
@@ -137,7 +142,14 @@ PAskFrame decodeAskFrame(char *frame);
  *
  *      Si l'opération est un echec la fonction renverra une valeurs NULL et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
- *      ENOTAQIT Là trame envoyer n'est pas une trame de type ACQUITTAL
+ *      ENOTAQIT    Là trame envoyer n'est pas une trame de type ACQUITTAL
+ *      EBADCMD     Là commande demander ne correspond pas à la trame identifier
+ *      EBADNODE    L'identififant du node est invalide
+ *      EWRONGEFLAG Le drapeau indique une erreur mais une data est présente
+ *      EWRONGSFLAG Le drapeau indique un succes mais aucune data est présente
+ *      EWRONGNFLAG Le drapeau indique not found mais c'est impossible sur un SET
+ *      EWRONGLEN   La longueur de data indique ne corespond pas à celle de la data
+ *      ENOENDFLAG  Aucun drapeau de fin de trame n'a était identifier
  *
  *      les erreur de evaluateFrame() peuvent êtres renvoyer des erreur ici
  */
