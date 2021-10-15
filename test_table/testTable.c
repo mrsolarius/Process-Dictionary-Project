@@ -13,7 +13,7 @@ int main() {
         scanf("%hd", &val);
         switch (val) {
             case 0:
-                printf("bye bye !");
+                printf("bye bye !\n");
                 break;
             case 1:
                 printf("Saisir la cle (decimal number): ");
@@ -30,9 +30,11 @@ int main() {
             case 2:
                 printf("Saisir la cle (decimal number): ");
                 scanf("%d", &key);
-                value = lookup(&tabletest, key);
+                value = lookup(tabletest, key);
                 if (value == NULL) {
                     printf("Pas de valeur trouvee");
+                }else{
+                    printf("Valeur trouvee = %s",value);
                 }
                 break;
             case 3:
