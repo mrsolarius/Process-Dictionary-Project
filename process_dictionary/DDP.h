@@ -24,6 +24,7 @@ enum DDP_errCode {
     ENOENDFLAG=0x7,
     ENOTASK=0x8,
     ENOTAQIT=0x9,
+    ENOTNULL=0xA
 };
 
 extern const char * DDP_errList[];
@@ -43,30 +44,30 @@ enum frameComponents {
     /**
      * Définis la fin d'une trame
      */
-    END_FRAME=0x04,
+    END_FRAME=(char)0x04,
 
 
     /**
      * Toutes les commandes de demande de DDP
      */
-    C_SET=0xA1,
-    C_LOOKUP=0xB1,
-    C_DUMP=0xD1,
-    C_EXIT=0xE1,
+    C_SET=(char)0xA1,
+    C_LOOKUP=(char)0xB1,
+    C_DUMP=(char)0xD1,
+    C_EXIT=(char)0xE1,
 
     /**
      * Toutes les commandes d'acquittement de DDP
      */
-    A_SET=0xA2,
-    A_LOOKUP=0xB2,
-    A_DUMP=0xD2,
+    A_SET=(char)0xA2,
+    A_LOOKUP=(char)0xB2,
+    A_DUMP=(char)0xD2,
 
     /**
      * Tous les drapeau d'erreur de DDP
      */
-    SUCCESS=0x20,
-    NOT_FOUND=0x44,
-    INTERNAL_ERROR=0x50
+    SUCCESS=(char)0x20,
+    NOT_FOUND=(char)0x44,
+    INTERNAL_ERROR=(char)0x50
 };
 
 /**
@@ -94,9 +95,9 @@ typedef AcquittalFrame *PAcquittalFrame;
 
 /**
  * Nom :
- *      evaluateFrame - Permet d'evaluer le type de la trame DDP passer en paramètre sous forme de char
+ *      evaluateType - Permet d'evaluer le type de la trame DDP passer en paramètre sous forme de char
  * Description :
- *      evaluateFrame() vas tenter de savoir si la chaine de character envoyer est une trame de DDP pouvant être utiliser
+ *      evaluateType() vas tenter de savoir si la chaine de character envoyer est une trame de DDP pouvant être utiliser
  * Paramètre :
  *      @param frame correspond au buffer d'une trame de DDP
  * Valeur de retour :
@@ -108,7 +109,7 @@ typedef AcquittalFrame *PAcquittalFrame;
  * Erreurs :
  *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
  */
-char evaluateFrame(char *frame);
+char evaluateType(char *frame);
 
 /**
  * Nom :
@@ -126,7 +127,7 @@ char evaluateFrame(char *frame);
  *      EBADCMD    Là commande demander ne correspond pas à la trame identifier
  *      ENOENDFLAG Aucun drapeau de fin de trame n'a était identifier
  *          
- *      les erreur de evaluateFrame() peuvent êtres renvoyer des erreur ici
+ *      les erreur de evaluateType() peuvent êtres renvoyer des erreur ici
  */
 PAskFrame decodeAskFrame(char *frame);
 
@@ -151,7 +152,7 @@ PAskFrame decodeAskFrame(char *frame);
  *      EWRONGLEN   La longueur de data indique ne corespond pas à celle de la data
  *      ENOENDFLAG  Aucun drapeau de fin de trame n'a était identifier
  *
- *      les erreur de evaluateFrame() peuvent êtres renvoyer des erreur ici
+ *      les erreur de evaluateType() peuvent êtres renvoyer des erreur ici
  */
 PAcquittalFrame decodeAcquittalFrame(char *frame);
 

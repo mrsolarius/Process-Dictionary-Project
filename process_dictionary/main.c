@@ -5,7 +5,7 @@
 #include "DDP.h"
 
 int main(){
-    evaluateFrame("salut");
+    evaluateType("salut");
     DDP_perror("test");
     return 0;
 }

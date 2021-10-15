@@ -4,7 +4,7 @@ SRCS = main.c DDP.c
 OBJS = $(SRCS:.c=.o)
 EXEC= processDictionay
 
-all: run
+all: $(EXEC)
 
 run:$(EXEC)
 	./$(EXEC) 5
