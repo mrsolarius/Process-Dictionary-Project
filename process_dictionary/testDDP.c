@@ -340,7 +340,7 @@ int main() {
     printTitle(eaf);
     passTest(eaf, "It should throw an EBADCMD error", encodeAskFrame_itShouldThrowEBADCMD());
     passTest(eaf, "It should throw an ENOTDDP error", encodeAskFrame_itShouldThrowENOTDDP());
-    passTest(eaf, "It should throw an ENOTDDP error", encodeAskFrame_itShouldEncodeThisFrame());
+    passTest(eaf, "It should correctly encode this frame", encodeAskFrame_itShouldEncodeThisFrame());
 
     resume();
 }
