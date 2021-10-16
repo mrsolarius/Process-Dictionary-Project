@@ -106,7 +106,7 @@ typedef AcquittalFrame *PAcquittalFrame;
  *
  *      Si l'operation est un échèque la fonction renvera -1 et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
- *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
+ *      ENOTDDP Là chaine de character ne correspond pas au protocole DDP
  */
 char evaluateType(const unsigned char frame);
 
@@ -126,8 +126,7 @@ char evaluateType(const unsigned char frame);
  *      ENOTASK    Là trame envoyer n'est pas une trame de type ASK
  *      EBADCMD    Là commande demander ne correspond pas à la trame identifier
  *      ENOENDFLAG Aucun drapeau de fin de trame n'a était identifier
- *          
- *      les erreur de evaluateType() peuvent êtres renvoyer des erreur ici
+ *      ENOTDDP    Là chaine de character ne correspond pas au protocole DDP
  */
 PAskFrame decodeAskFrame(unsigned char *frame);
 
@@ -141,18 +140,17 @@ PAskFrame decodeAskFrame(unsigned char *frame);
  * Valeur de retour :
  *      Si l'operation est un succès la fonction renvois le pointer vers la trame parser de type AskFrame
  *
- *      Si l'opération est un echec la fonction renverra une valeurs NULL et DDPperror sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra une valeurs 0xff dans la partie cmd de la structure
+ *      et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      ENOTAQIT    Là trame envoyer n'est pas une trame de type ACQUITTAL
  *      EBADCMD     Là commande demander ne correspond pas à la trame identifier
- *      EBADNODE    L'identififant du node est invalide
  *      EWRONGEFLAG Le drapeau indique une erreur mais une data est présente
  *      EWRONGSFLAG Le drapeau indique un succes mais aucune data est présente
  *      EWRONGNFLAG Le drapeau indique not found mais c'est impossible sur un SET
  *      EWRONGLEN   La longueur de data indique ne corespond pas à celle de la data
  *      ENOENDFLAG  Aucun drapeau de fin de trame n'a était identifier
- *
- *      les erreur de evaluateType() peuvent êtres renvoyer des erreur ici
+ *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
  */
 PAcquittalFrame decodeAcquittalFrame(unsigned char *frame);
 
@@ -167,9 +165,11 @@ PAcquittalFrame decodeAcquittalFrame(unsigned char *frame);
  *      Si l'operation est un succès la fonction renvois une chaine de character correspondent
  *      à la sérialisation d'une ASK FRAME
  *
- *      Si l'opération est un echec la fonction renverra -1 et DDPperror sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra 0xff dans la premier case du tableau
+ *      et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      EBADCMD Là commande demander ne correspond pas à la trame identifier
+ *      ENOTDDP Là chaine de character ne correspond pas au protocole DDP
  */
 unsigned char * encodeAskFrame(PAskFrame askFrame);
 
@@ -184,7 +184,8 @@ unsigned char * encodeAskFrame(PAskFrame askFrame);
  *      Si l'operation est un succès la fonction renvois une chaine de character correspondent
  *      à la sérialisation d'une ACQUITTAL FRAME
  *
- *      Si l'opération est un echec la fonction renverra -1 et DDPperror sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra 0xff dans la premier case du tableau
+ *      et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      EBADCMD     Là commande demander ne correspond pas à la trame identifier
  *      EBADNODE    L'identififant du node est invalide
@@ -206,7 +207,7 @@ char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame);
  *      Le numéro d'erreur est obtenu à partir de la variable externe DDP_Errno, qui contient le code d'erreur lorsqu'un problème survient,
  *      mais qui s'est pas effacée lorsqu'un appel est réussi.
  *
- *      La liste globale d'erreurs DDP_errList[] indexée par errno peut être utilisée pour obtenir le message d'erreur sans le saut de ligne.
+ *      La liste globale d'erreurs DDP_errList[] indexée par DDP_errno peut être utilisée pour obtenir le message d'erreur sans DDP_perror.
  *
  * Paramètre :
  *      @param msg correspond a message précédent l'erreur

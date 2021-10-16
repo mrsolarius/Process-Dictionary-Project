@@ -234,7 +234,7 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
     if (evaluateType(askFrame->cmd) == -1) {
         return error;
     } else if (evaluateType(askFrame->cmd) != ASK) {
-        DDP_Errno = ENOTASK;
+        DDP_Errno = EBADCMD;
         return error;
     }
     switch (askFrame->cmd) {
