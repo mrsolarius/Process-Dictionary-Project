@@ -266,14 +266,14 @@ bool decodeAcquittalFrame_itShouldCorrectlyDecodeThisFrame_2(){
  *  test de encodeAskFrame()  *
  ******************************/
 
-bool encodeAskFrame_itShouldThrowENOTASK(){
+bool encodeAskFrame_itShouldThrowEBADCMD(){
     DDP_Errno = -1;
     PAskFrame askFrame = (PAskFrame) malloc(sizeof(AskFrame));
     askFrame->cmd=A_SET;
     askFrame->val=2;
     unsigned char * data = encodeAskFrame(askFrame);
     free(askFrame);
-    return (DDP_Errno == ENOTASK) && (data[0] == 0xff);
+    return (DDP_Errno == EBADCMD) && (data[0] == 0xff);
 }
 
 bool encodeAskFrame_itShouldThrowENOTDDP(){
@@ -338,7 +338,7 @@ int main() {
 
     char *eaf ="encodeAskFrame()";
     printTitle(eaf);
-    passTest(eaf, "It should throw an ENOTASK error", encodeAskFrame_itShouldThrowENOTASK());
+    passTest(eaf, "It should throw an EBADCMD error", encodeAskFrame_itShouldThrowEBADCMD());
     passTest(eaf, "It should throw an ENOTDDP error", encodeAskFrame_itShouldThrowENOTDDP());
     passTest(eaf, "It should throw an ENOTDDP error", encodeAskFrame_itShouldEncodeThisFrame());
 
