@@ -16,15 +16,14 @@ extern int DDP_Errno;
 enum DDP_errCode {
     ENOTDDP=0x0,
     EBADCMD=0x1,
-    EBADNODE=0x2,
-    EWRONGEFLAG=0x3,
-    EWRONGSFLAG=0x4,
-    EWRONGNFLAG=0x5,
-    EWRONGLEN=0x6,
-    ENOENDFLAG=0x7,
-    ENOTASK=0x8,
-    ENOTAQIT=0x9,
-    ENOTNULL=0xA
+    EWRONGEFLAG=0x2,
+    EWRONGSFLAG=0x3,
+    EWRONGNFLAG=0x4,
+    EWRONGLEN=0x5,
+    ENOENDFLAG=0x6,
+    ENOTASK=0x7,
+    ENOTAQIT=0x8,
+    ENOTNULL=0x9
 };
 
 extern const char * DDP_errList[];
@@ -44,30 +43,30 @@ enum frameComponents {
     /**
      * Définis la fin d'une trame
      */
-    END_FRAME=(char)0x04,
+    END_FRAME=(unsigned char)0x04,
 
 
     /**
      * Toutes les commandes de demande de DDP
      */
-    C_SET=(char)0xA1,
-    C_LOOKUP=(char)0xB1,
-    C_DUMP=(char)0xD1,
-    C_EXIT=(char)0xE1,
+    C_SET=(unsigned char)0xA1,
+    C_LOOKUP=(unsigned char)0xB1,
+    C_DUMP=(unsigned char)0xD1,
+    C_EXIT=(unsigned char)0xE1,
 
     /**
      * Toutes les commandes d'acquittement de DDP
      */
-    A_SET=(char)0xA2,
-    A_LOOKUP=(char)0xB2,
-    A_DUMP=(char)0xD2,
+    A_SET=(unsigned char)0xA2,
+    A_LOOKUP=(unsigned char)0xB2,
+    A_DUMP=(unsigned char)0xD2,
 
     /**
      * Tous les drapeau d'erreur de DDP
      */
-    SUCCESS=(char)0x20,
-    NOT_FOUND=(char)0x44,
-    INTERNAL_ERROR=(char)0x50
+    SUCCESS=(unsigned char)0x20,
+    NOT_FOUND=(unsigned char)0x44,
+    INTERNAL_ERROR=(unsigned char)0x50
 };
 
 /**
@@ -75,7 +74,7 @@ enum frameComponents {
  */
 typedef struct _AskFrame {
     unsigned char cmd;
-    unsigned short val;
+    unsigned int val;
 } AskFrame;
 
 typedef AskFrame *PAskFrame;
@@ -88,7 +87,7 @@ typedef struct _AcquittalFrame {
     unsigned char nodeID;
     unsigned char errorFlag;
     unsigned short dataLength;
-    char *data;
+    unsigned char *data;
 } AcquittalFrame;
 
 typedef AcquittalFrame *PAcquittalFrame;
@@ -109,7 +108,7 @@ typedef AcquittalFrame *PAcquittalFrame;
  * Erreurs :
  *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
  */
-char evaluateType(char *frame);
+char evaluateType(const unsigned char frame);
 
 /**
  * Nom :
@@ -121,7 +120,8 @@ char evaluateType(char *frame);
  * Valeur de retour :
  *      Si l'operation est un succès la fonction renvois le pointer vers la trame parser de type AskFrame
  *
- *      Si l'opération est un echec la fonction renverra une valeurs NULL et DDPperror sera definie et positioner de manière approprier
+ *      Si l'opération est un echec la fonction renverra une valeurs 0xff dans la partie cmd de la structure
+ *      et DDPperror sera definie et positioner de manière approprier
  * Erreurs :
  *      ENOTASK    Là trame envoyer n'est pas une trame de type ASK
  *      EBADCMD    Là commande demander ne correspond pas à la trame identifier
@@ -129,7 +129,7 @@ char evaluateType(char *frame);
  *          
  *      les erreur de evaluateType() peuvent êtres renvoyer des erreur ici
  */
-PAskFrame decodeAskFrame(char *frame);
+PAskFrame decodeAskFrame(unsigned char *frame);
 
 /**
  * Nom :
@@ -154,7 +154,7 @@ PAskFrame decodeAskFrame(char *frame);
  *
  *      les erreur de evaluateType() peuvent êtres renvoyer des erreur ici
  */
-PAcquittalFrame decodeAcquittalFrame(char *frame);
+PAcquittalFrame decodeAcquittalFrame(unsigned char *frame);
 
 /**
  * Nom :
@@ -171,7 +171,7 @@ PAcquittalFrame decodeAcquittalFrame(char *frame);
  * Erreurs :
  *      EBADCMD Là commande demander ne correspond pas à la trame identifier
  */
-char *encodeAskFrame(PAskFrame askFrame);
+unsigned char * encodeAskFrame(PAskFrame askFrame);
 
 /**
  * Nom :

@@ -11,7 +11,6 @@ int DDP_Errno = -1;
 const char *DDP_errList[] = {
         "Not a DDP Frame",
         "CMD not match with frame",
-        "Node isn't valid",
         "Error flag placed but data was found",
         "Success flag placed but no data was found",
         "Not found flag placed but this cmd can't be not found",
@@ -20,10 +19,10 @@ const char *DDP_errList[] = {
         "Not a ASK FRAME",
         "Not a ACQUITTEMENT FRAME",
         "The value can't be null"
-};;
+};
 
-char evaluateType(char *frame) {
-    switch (frame[0]) {
+char evaluateType(const unsigned char frame) {
+    switch (frame) {
         case C_SET:
         case A_SET:
         case C_LOOKUP:
@@ -34,77 +33,86 @@ char evaluateType(char *frame) {
             break;
         default:
             DDP_Errno = ENOTDDP;
-            exit(-1);
+            return -1;
     }
     //On applique le mask sur le characther pour récupérer le type indiquer en deuxème positon
-    return frame[0] & (char)0x0F;
+    // Exemeple
+    // 0xA1 = 0b1010 0001
+    // 0x0F = 0b0000 1111 on applique le masque
+    //      & 0b0000 0001 avec le & bit à bit on obtient uniquement l'octet de point faible
+    // soit la valeur du type de trame
+    return frame & 0x0F;
 }
 
-PAskFrame decodeAskFrame(char *frame) {
-    char typeFrame = evaluateType(frame);
+PAskFrame decodeAskFrame(unsigned char *frame) {
+    //Definition de la structure renvoyer en cas d'erreur
+    PAskFrame error = (PAskFrame) malloc(sizeof(AskFrame));
+    error->cmd = 0xff;
+
+    char typeFrame = evaluateType(frame[0]);
     if (typeFrame == ACQUITTAL) {
         DDP_Errno = ENOTASK;
-        exit(-1);
+        return error;
     } else if (typeFrame == -1) {
-        exit(-1);
+        return error;
     }
     PAskFrame askFrame = (PAskFrame) malloc(sizeof(AskFrame));
-    unsigned int frameLength = strlen(frame);
+    unsigned int frameLength = strlen((char *) frame);
     //On teste la taille de la frame
     if (frameLength == 2) {
-        //Si la taille et de 2 alors 2 commande autorisé
-        switch (frame[0]) {
-            case C_EXIT:
-                break;
-            default:
-                DDP_Errno = EBADCMD;
-                exit(-1);
+        //Si la taille et de 2 alors 1 commande autorisé
+        if (frame[0] != C_EXIT) {
+            DDP_Errno = EBADCMD;
+            return error;
         }
         //Si la fin de trame ne correspond pas au flag de fin alors error
         if (frame[1] != END_FRAME) {
             DDP_Errno = ENOENDFLAG;
-            exit(-1);
+            return error;
         }
 
         askFrame->cmd = frame[0];
         askFrame->val = 0xff;
     } else if (frameLength == 4) {
-        //Si la taille et de 4 alors 2 commande autorisé
-        switch (frame[0]) {
-            case C_SET:
-            case C_LOOKUP:
-            case C_DUMP:
-                break;
-            default:
-                DDP_Errno = EBADCMD;
-                exit(-1);
+        //Si la taille et de 4 alors 3 commande autorisé
+        if (frame[0] == C_EXIT) {
+            DDP_Errno = EBADCMD;
+            return error;
         }
         //Si la fin de trame ne correspond pas au flag de fin alors error
         if (frame[3] != END_FRAME) {
             DDP_Errno = ENOENDFLAG;
-            exit(-1);
+            return error;
         }
 
         askFrame->cmd = (unsigned char) frame[0];
-        askFrame->val = (frame[1] << 8) + frame[2];
+        //On décale de un octer la premier case mémoire -1 puis on y concataine les bite de la deuxème trame -1
+        //Pour éviter que strlen s'arrete de compter les ellement car il est tomber sur un octer à 0
+        //on ajoute 1 au deux octer dans encodeAskframe que l'on doit retrancher ici
+        askFrame->val = ((frame[1] - 1) << 8) + (unsigned char) frame[2] - 1;
     } else {
         //Si la taille ne corespond pas du tous ce n'est pas une trame DDP
         DDP_Errno = ENOTDDP;
-        exit(-1);
+        return error;
     }
+    free(error);
     return askFrame;
 }
 
-PAcquittalFrame decodeAcquittalFrame(char *frame) {
-    char typeFrame = evaluateType(frame);
+PAcquittalFrame decodeAcquittalFrame(unsigned char *frame) {
+    //Definition de la structure renvoyer en cas d'erreur
+    PAcquittalFrame error = (PAcquittalFrame) malloc(sizeof(AcquittalFrame));
+    error->cmd = 0xff;
+
+    char typeFrame = evaluateType(frame[0]);
     if (typeFrame == ASK) {
         DDP_Errno = ENOTAQIT;
-        exit(-1);
+        return error;
     } else if (typeFrame == -1) {
-        exit(-1);
+        return error;
     }
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(AcquittalFrame));
-    unsigned int frameLength = strlen(frame);
+    unsigned int frameLength = strlen((char *) frame);
     //On teste la taille de la frame
     if (frameLength == 4) {
         switch (frame[0]) {
@@ -112,32 +120,26 @@ PAcquittalFrame decodeAcquittalFrame(char *frame) {
                 //Un set ne peut pas avoir l'erreur notfound
                 if (frame[2] == NOT_FOUND) {
                     DDP_Errno = EWRONGNFLAG;
-                    exit(-1);
+                    return error;
                 }
                 break;
             case A_DUMP:
                 //Un dump ne peut pas avoir l'erreur notfound
                 if (frame[2] == NOT_FOUND) {
                     DDP_Errno = EWRONGNFLAG;
-                    exit(-1);
+                    return error;
                 }
                 break;
             case A_LOOKUP:
                 //Un lookup ne peut pas être un success sans données
                 if (frame[2] == SUCCESS) {
                     DDP_Errno = EWRONGSFLAG;
-                    exit(-1);
+                    return error;
                 }
                 break;
             default:
                 DDP_Errno = EBADCMD;
-                exit(-1);
-        }
-
-        //Verification de l'identifiant du node
-        if (frame[1] > 0 && frame[1] < 255) {
-            DDP_Errno = EBADNODE;
-            exit(-1);
+                return error;
         }
 
         //Verification des flag d'erreurs
@@ -148,30 +150,26 @@ PAcquittalFrame decodeAcquittalFrame(char *frame) {
                 break;
             default:
                 DDP_Errno = ENOTDDP;
-                exit(-1);
+                return error;
         }
 
         //Si la fin de trame ne correspond pas au flag de fin alors error
         if (frame[3] != END_FRAME) {
             DDP_Errno = ENOENDFLAG;
-            exit(-1);
+            return error;
         }
 
 
         acquittalFrame->cmd = (unsigned char) frame[0];
-        acquittalFrame->nodeID = (unsigned char) frame[1];
+        //pour eviter d'avoir une valeur null on à ajouter 1 dans l'encodage de la trame que l'on retranche ici
+        acquittalFrame->nodeID = (unsigned char) frame[1] - 1;
         acquittalFrame->errorFlag = (unsigned char) frame[2];
         acquittalFrame->dataLength = 0;
         acquittalFrame->data = NULL;
     } else if (frameLength > 5) {
-        if (frame[0] != A_LOOKUP) {
-            DDP_Errno = ENOTDDP;
-        }
-
-        //Verification de l'identifiant du node
-        if (frame[1] > 0 && frame[1] < 255) {
-            DDP_Errno = EBADNODE;
-            exit(-1);
+        if (frame[0] == A_SET || frame[0] == A_DUMP) {
+            DDP_Errno = EBADCMD;
+            return error;
         }
 
         //Verification des flag du protocole
@@ -182,55 +180,64 @@ PAcquittalFrame decodeAcquittalFrame(char *frame) {
                 break;
             default:
                 DDP_Errno = ENOTDDP;
-                exit(-1);
+                return error;
         }
 
         //Une trame de lookup doit être un success si il y as de là data
         if (frame[2] != SUCCESS) {
             DDP_Errno = EWRONGEFLAG;
-            exit(-1);
+            return error;
         }
 
         //Verification de la fin de la frame
-        if (frame[frameLength - 1]) {
+        if (frame[frameLength - 1] != END_FRAME) {
             DDP_Errno = ENOENDFLAG;
-            exit(-1);
+            return error;
         }
 
         //Récupération de la longeur de la data
-        unsigned int length = (frame[3] << 8) + frame[4];
-
+        //On décale de un octer la premier case mémoire -1 puis on y concataine les bite de la deuxème trame -1
+        //Pour éviter que strlen s'arrete de compter les ellement car il est tomber sur un octer à 0
+        //on ajoute 1 au deux octer dans encodeAquitallframe que l'on doit retrancher ici
+        unsigned int length = ((frame[3] - 1) << 8) + frame[4] - 1;
         //On verifie quela taille de la trame et bien egale à la taile indiquer plus 5
-        if (length + 5 != frameLength) {
+        if (frameLength - length != 6) {
             DDP_Errno = EWRONGLEN;
-            exit(-1);
+            return error;
         }
 
-        char *data = malloc(sizeof(char) * length);
-
-        for (int i = 0; i < length - 2; i++) {
-            data[i] = (frame[i] << 8) + frame[i + 1];
+        acquittalFrame->data = malloc(sizeof(char) * length);
+        for (int i = 5, j = 0; i < frameLength - length + 1; i++, j++) {
+            acquittalFrame->data[j] = frame[i];
         }
 
         acquittalFrame->cmd = frame[0];
-        acquittalFrame->nodeID = frame[1];
+        //pour eviter d'avoir une valeur null on à ajouter 1 dans l'encodage de la trame que l'on retranche ici
+        acquittalFrame->nodeID = frame[1] - 1;
         acquittalFrame->errorFlag = frame[2];
         acquittalFrame->dataLength = length;
-        acquittalFrame->data = data;
+    } else {
+        //Si la taille ne corespond pas du tous ce n'est pas une trame DDP
+        DDP_Errno = ENOTDDP;
+        return error;
     }
-
+    free(error);
     return acquittalFrame;
 }
 
-char *encodeAskFrame(PAskFrame askFrame) {
-    int length = 0;
+unsigned char *encodeAskFrame(PAskFrame askFrame) {
+    char length = 0;
+    //Definition du renvoi d'erreur
+    unsigned char *error = malloc(sizeof(unsigned char));
+    error[0] = 0xff;
 
-    if (evaluateType((char *) &askFrame->cmd) != ASK) {
+    if (evaluateType(askFrame->cmd) == -1) {
+        return error;
+    } else if (evaluateType(askFrame->cmd) != ASK) {
         DDP_Errno = ENOTASK;
-        exit(-1);
+        return error;
     }
-
-    switch ((char) askFrame->cmd) {
+    switch (askFrame->cmd) {
         case C_EXIT:
             length = 2;
             break;
@@ -239,27 +246,25 @@ char *encodeAskFrame(PAskFrame askFrame) {
         case C_DUMP:
             length = 4;
             break;
-        default:
-            DDP_Errno = EBADCMD;
-            exit(-1);
     }
 
-    char *frame = malloc(sizeof(char) * length);
-    switch (length) {
-        case 2:
-            frame[0] = askFrame->cmd;
-            frame[1] = END_FRAME;
-            break;
-        case 4:
-            frame[0]=askFrame->cmd;
-            //Si la valeur est null (null ici veut dire 255)
-            if(askFrame->val==0xff){
-                DDP_Errno = ENOTNULL;
-                exit(-1);
-            }
-            frame[1] = askFrame->val & 0xFF;
-            frame[2] = (askFrame->val >> 8) & 0xFF;
-            frame[3] = END_FRAME;
+    unsigned char *frame = malloc(sizeof(char) * length);
+    if (length == 2) {
+        frame[0] = askFrame->cmd;
+        frame[1] = END_FRAME;
+    } else if (length == 4) {
+        frame[0] = askFrame->cmd;
+        //Si la valeur est null (null ici veut dire 255)
+        if (askFrame->val == 0xff) {
+            DDP_Errno = ENOTNULL;
+            return error;
+        }
+        frame[1] = ((askFrame->val >> 8) & 0xFF)+1;
+        frame[2] = (askFrame->val + 1 ) & 0xFF;
+        frame[3] = END_FRAME;
+    } else {
+        DDP_Errno = ENOTDDP;
+        return error;
     }
 
     return frame;
