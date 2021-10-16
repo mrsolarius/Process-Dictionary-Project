@@ -227,28 +227,23 @@ PAcquittalFrame decodeAcquittalFrame(unsigned char *frame) {
 
 unsigned char *encodeAskFrame(PAskFrame askFrame) {
     char length = 0;
+    unsigned char *frame;
     //Definition du renvoi d'erreur
     unsigned char *error = malloc(sizeof(unsigned char));
     error[0] = 0xff;
-
     if (evaluateType(askFrame->cmd) == -1) {
         return error;
     } else if (evaluateType(askFrame->cmd) != ASK) {
         DDP_Errno = EBADCMD;
         return error;
     }
-    switch (askFrame->cmd) {
-        case C_EXIT:
-            length = 2;
-            break;
-        case C_SET:
-        case C_LOOKUP:
-        case C_DUMP:
-            length = 4;
-            break;
+    if(askFrame->cmd==C_EXIT) {
+        length = 2;
+    }else{
+        length = 4;
     }
 
-    unsigned char *frame = malloc(sizeof(char) * length);
+    frame = malloc(sizeof(char) * length);
     if (length == 2) {
         frame[0] = askFrame->cmd;
         frame[1] = END_FRAME;
@@ -270,14 +265,128 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
     return frame;
 }
 
-char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
-    return (char *) (char) -1;
+unsigned char * encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
+    unsigned int length;
+    unsigned char *frame;
+    //Definition du renvoi d'erreur
+    unsigned char *error = malloc(sizeof(unsigned char));
+    error[0] = 0xff;
+
+    if (evaluateType(acquittalFrame->cmd) == -1) {
+        return error;
+    } else if (evaluateType(acquittalFrame->cmd) != ACQUITTAL) {
+        DDP_Errno = EBADCMD;
+        return error;
+    }
+
+    if(acquittalFrame->dataLength>0){
+        length =  6 + acquittalFrame->dataLength;
+        frame = malloc(sizeof(char) * length);
+        if (acquittalFrame->cmd == A_SET || acquittalFrame->cmd == A_DUMP) {
+            DDP_Errno = EBADCMD;
+            return error;
+        }
+
+        //Verification des flag du protocole
+        switch (acquittalFrame->errorFlag) {
+            case SUCCESS:
+            case NOT_FOUND:
+            case INTERNAL_ERROR:
+                break;
+            default:
+                DDP_Errno = ENOTDDP;
+                return error;
+        }
+
+        //Une trame de lookup doit être un success si il y as de là data
+        if (acquittalFrame->errorFlag != SUCCESS) {
+            DDP_Errno = EWRONGEFLAG;
+            return error;
+        }
+
+        //Parcoure des data pour ocnnaitre la longeur réel
+        unsigned int checkLen = 0;
+        while (acquittalFrame->data[checkLen]!=0){
+            checkLen++;
+        }
+
+        //Si la longeur ne correspond pas à celle indiquer on envoie une erreur
+        if(checkLen!=acquittalFrame->dataLength) {
+            DDP_Errno = EWRONGLEN;
+            return error;
+        }
+
+        frame[0]=acquittalFrame->cmd;
+        //pour eviter d'avoir une valeur null on à ajouter 1 dans l'encodage de la trame que l'on retranche ici
+        frame[1]= acquittalFrame->nodeID + 1;
+        frame[2] = acquittalFrame->errorFlag;
+        //Séparation de l'unsigned int en 2 char couper en octer
+        frame[3] = ((acquittalFrame->dataLength >> 8) & 0xFF)+1;
+        frame[4] = (acquittalFrame->dataLength + 1 ) & 0xFF;
+        unsigned int i,j;
+        //Parcoure des données de la structure est inisialisation de celle ci dans la trame
+        for (i = 5, j = 0; j < acquittalFrame->dataLength; i++, j++) {
+            frame[i]=acquittalFrame->data[j];
+        }
+        //On termine par le end frame (défini par i+1 pour être à la fin du tableau)
+        frame[i+1]=END_FRAME;
+    } else{
+        length = 4;
+        frame = malloc(sizeof(char) * length);
+
+        //Verification des flag du protocole
+        switch (acquittalFrame->errorFlag) {
+            case SUCCESS:
+            case NOT_FOUND:
+            case INTERNAL_ERROR:
+                break;
+            default:
+                DDP_Errno = ENOTDDP;
+                return error;
+        }
+
+        //Verification de la commande utiliser
+        switch (acquittalFrame->cmd) {
+            case A_SET:
+                //Un set ne peut pas avoir l'erreur notfound
+                if (acquittalFrame->errorFlag == NOT_FOUND) {
+                    DDP_Errno = EWRONGNFLAG;
+                    return error;
+                }
+                break;
+            case A_DUMP:
+                //Un dump ne peut pas avoir l'erreur notfound
+                if (acquittalFrame->errorFlag == NOT_FOUND) {
+                    DDP_Errno = EWRONGNFLAG;
+                    return error;
+                }
+                break;
+            case A_LOOKUP:
+                //Un lookup ne peut pas être un success sans données
+                if (acquittalFrame->errorFlag == SUCCESS) {
+                    DDP_Errno = EWRONGSFLAG;
+                    return error;
+                }
+                break;
+            default:
+                DDP_Errno = EBADCMD;
+                return error;
+        }
+
+        frame[0]=acquittalFrame->cmd;
+        //pour eviter d'avoir une valeur null on à ajouter 1 dans l'encodage de la trame que l'on retranche ici
+        frame[1]= acquittalFrame->nodeID + 1;
+        frame[2] = acquittalFrame->errorFlag;
+        frame[3] = END_FRAME;
+    }
+    free(error);
+    return frame;
 }
 
 void DDP_perror(char *data) {
     if (DDP_Errno >= 0 && DDP_Errno <= 8) {
-        fprintf(stderr, "%s : %s\n", data, DDP_errList[DDP_Errno]);
+        fprintf(stderr, "\n%s : %s\n", data, DDP_errList[DDP_Errno]);
     } else {
-        fprintf(stderr, "%s : Success\n", data);
+        fprintf(stderr, "\n%s : Success\n", data);
     }
 }

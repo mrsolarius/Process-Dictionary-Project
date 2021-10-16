@@ -193,7 +193,7 @@ unsigned char * encodeAskFrame(PAskFrame askFrame);
  *      EWRONGSFLAG Le drapeau indique un succes mais aucune data est présente
  *      EWRONGLEN   La longueur de data indique ne correspond pas à celle de la data
  */
-char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame);
+unsigned char * encodeAcquittalFrame(PAcquittalFrame acquittalFrame);
 
 /**
  * Nom :
