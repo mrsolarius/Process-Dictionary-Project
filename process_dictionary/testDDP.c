@@ -124,6 +124,17 @@ bool decodeAskFrame_itShouldCorrectlyDecodeThisFrame() {
     return (res->cmd == C_SET) && (res->val == 125);
 }
 
+bool decodeAskFrame_itShouldCorrectlyDecodeThisFrame_2() {
+    DDP_Errno = -1;
+    /**
+     * On veut envoyer la valeur 125 soit 0b0000 0000 0111 1101
+     * on envoie donc 0 0x7D
+     */
+    unsigned char frame[] = {C_EXIT, END_FRAME};
+    PAskFrame res = decodeAskFrame(frame);
+    return (res->cmd == C_EXIT);
+}
+
 /************************************
  *  test de decodeAcquittalFrame()  *
  ************************************/
@@ -299,7 +310,177 @@ bool encodeAskFrame_itShouldEncodeThisFrame(){
     return memcmp(expectedFrame,data,4)==0;
 }
 
-//
+bool encodeAskFrame_itShouldEncodeThisFrame_2(){
+    unsigned char expectedFrame[] = {C_EXIT, END_FRAME};
+    DDP_Errno = -1;
+    PAskFrame askFrame = (PAskFrame) malloc(sizeof(AskFrame));
+    askFrame->cmd=C_EXIT;
+    unsigned char * data = encodeAskFrame(askFrame);
+    free(askFrame);
+    return memcmp(expectedFrame,data,2)==0;
+}
+
+bool encodeAcquittalFrame_itShouldThrowEBADCMD(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=C_SET;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=SUCCESS;
+    acquittalFrame->dataLength=0;
+    unsigned char * data = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EBADCMD) && (data[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowEBADCMD_2(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_SET;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=SUCCESS;
+    acquittalFrame->dataLength=10;
+    unsigned char data [] = {'s','a','l','u','t',' ','t','e','s','t'};
+    acquittalFrame->data=malloc(sizeof(char) * 10);
+    for(int i = 0; i<10;i++){
+        acquittalFrame->data[i]=data[i];
+    }
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EBADCMD) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowENOTDDP(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_LOOKUP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=0x55;
+    acquittalFrame->dataLength=10;
+    unsigned char data [] = {'s','a','l','u','t',' ','t','e','s','t'};
+    acquittalFrame->data=malloc(sizeof(char) * 10);
+    for(int i = 0; i<10;i++){
+        acquittalFrame->data[i]=data[i];
+    }
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == ENOTDDP) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowENOTDDP_2(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_SET;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=0x55;
+    acquittalFrame->dataLength=0;
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == ENOTDDP) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowEWRONGEFLAG(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_LOOKUP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=INTERNAL_ERROR;
+    acquittalFrame->dataLength=10;
+    unsigned char data [] = {'s','a','l','u','t',' ','t','e','s','t'};
+    acquittalFrame->data=malloc(sizeof(char) * 10);
+    for(int i = 0; i<10;i++){
+        acquittalFrame->data[i]=data[i];
+    }
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EWRONGEFLAG) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowEWRONGNFLAG_A_SET(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_SET;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=NOT_FOUND;
+    acquittalFrame->dataLength=0;
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EWRONGNFLAG) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowEWRONGNFLAG_A_DUMP(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_DUMP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=NOT_FOUND;
+    acquittalFrame->dataLength=0;
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EWRONGNFLAG) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowEWRONGSFLAG_A_LOOKUP(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_LOOKUP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=SUCCESS;
+    acquittalFrame->dataLength=0;
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EWRONGSFLAG) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldThrowEWRONGLEN(){
+    DDP_Errno = -1;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_LOOKUP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=SUCCESS;
+    acquittalFrame->dataLength=9;
+    unsigned char data [] = {'s','a','l','u','t',' ','t','e','s','t'};
+    acquittalFrame->data=malloc(sizeof(char) * 10);
+    for(int i = 0; i<10;i++){
+        acquittalFrame->data[i]=data[i];
+    }
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return (DDP_Errno == EWRONGLEN) && (frame[0] == 0xff);
+}
+
+bool encodeAcquittalFrame_itShouldEncodeThisFrame(){
+    DDP_Errno = -1;
+    //10 = 0b 0000 0000 0000 1010
+    //                    0x0A
+    unsigned char expectedFrame[] = {A_LOOKUP, 0x2 + 1, SUCCESS,0x00 + 1,0x0A + 1,'s','a','l','u','t',' ','t','e','s','t', END_FRAME};
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_LOOKUP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=SUCCESS;
+    acquittalFrame->dataLength=10;
+    unsigned char data [] = {'s','a','l','u','t',' ','t','e','s','t'};
+    acquittalFrame->data=malloc(sizeof(char) * 10);
+    for(int i = 0; i<10;i++){
+        acquittalFrame->data[i]=data[i];
+    }
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return memcmp(expectedFrame,frame,15)==0;
+}
+
+bool encodeAcquittalFrame_itShouldEncodeThisFrame_2(){
+    DDP_Errno = -1;
+    unsigned char expectedFrame[] = {A_LOOKUP, 0x2 + 1, INTERNAL_ERROR, END_FRAME};
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    acquittalFrame->cmd=A_LOOKUP;
+    acquittalFrame->nodeID=2;
+    acquittalFrame->errorFlag=INTERNAL_ERROR;
+    acquittalFrame->dataLength=0;
+    unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    free(acquittalFrame);
+    return memcmp(expectedFrame,frame,4)==0;
+}
+
 int main() {
     char *et = "evaluateType()";
     printTitle(et);
@@ -316,6 +497,7 @@ int main() {
     passTest(daf, "It should throw another EBADCMD error", decodeAskFrame_itShouldThrowEBADCMD_2());
     passTest(daf, "It should throw another ENOENDFLAG error", decodeAskFrame_itShouldThrowENOENDFLAG_2());
     passTest(daf, "It should correctly decode this frame", decodeAskFrame_itShouldCorrectlyDecodeThisFrame());
+    passTest(daf, "It should correctly decode this frame", decodeAskFrame_itShouldCorrectlyDecodeThisFrame_2());
 
     char *daqf = "decodeAcquittalFrame()";
     printTitle(daqf);
@@ -341,6 +523,21 @@ int main() {
     passTest(eaf, "It should throw an EBADCMD error", encodeAskFrame_itShouldThrowEBADCMD());
     passTest(eaf, "It should throw an ENOTDDP error", encodeAskFrame_itShouldThrowENOTDDP());
     passTest(eaf, "It should correctly encode this frame", encodeAskFrame_itShouldEncodeThisFrame());
+    passTest(eaf, "It should correctly encode this frame", encodeAskFrame_itShouldEncodeThisFrame_2());
+
+    char *eaqf ="encodeAcquittalFrame()";
+    printTitle(eaqf);
+    passTest(eaqf,"It should throw an EBADCMD error",encodeAcquittalFrame_itShouldThrowEBADCMD());
+    passTest(eaqf,"It should throw another EBADCMD error",encodeAcquittalFrame_itShouldThrowEBADCMD_2());
+    passTest(eaqf,"It should throw ENOTDDP error",encodeAcquittalFrame_itShouldThrowENOTDDP());
+    passTest(eaqf,"It should throw another ENOTDDP error",encodeAcquittalFrame_itShouldThrowENOTDDP_2());
+    passTest(eaqf,"It should throw another EWRONGEFLAG error",encodeAcquittalFrame_itShouldThrowEWRONGEFLAG());
+    passTest(eaqf,"It should throw another EWRONGNFLAG error on A_SET",encodeAcquittalFrame_itShouldThrowEWRONGNFLAG_A_SET());
+    passTest(eaqf,"It should throw another EWRONGNFLAG error on A_DUMP",encodeAcquittalFrame_itShouldThrowEWRONGNFLAG_A_DUMP());
+    passTest(eaqf,"It should throw EWRONGSFLAG error on A_LOOKUP",encodeAcquittalFrame_itShouldThrowEWRONGSFLAG_A_LOOKUP());
+    passTest(eaqf,"It should throw EWRONGLEN error",encodeAcquittalFrame_itShouldThrowEWRONGLEN());
+    passTest(eaqf,"It should correctly encode this frame",encodeAcquittalFrame_itShouldEncodeThisFrame());
+    passTest(eaqf,"It should correctly encode this frame",encodeAcquittalFrame_itShouldEncodeThisFrame_2());
 
     resume();
 }
