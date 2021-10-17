@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <wait.h>
 #include "node.h"
+#include "table.h"
 
 unsigned char* concat(unsigned char *s1, unsigned char *s2)
 {
@@ -19,11 +20,12 @@ unsigned char* concat(unsigned char *s1, unsigned char *s2)
     return result;
 }
 
-void runNode(int nodeID, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
+void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
     __pid_t pid = getpid();
     printf("runNode %d", nodeID);
     PAskFrame askFrame = (PAskFrame) malloc(sizeof(AskFrame));
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
+    Table_entry *dataBases = NULL;
     long res;
     closePipes(pipeCtr,pipeRead,pipeWrite);
     unsigned char *frame;
@@ -36,23 +38,53 @@ void runNode(int nodeID, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
         }
         switch (askFrame->cmd) {
             case C_SET:
-            case C_LOOKUP:
-                break;
-            case C_DUMP:
-                printf("dump %d", nodeID);
-                if(askFrame->val-1 != nodeID){
+                if(askFrame->val%totalNode-1){
+                    char value[4000];
+                    printf("Saisir la valeur (chaine de caracteres): ");
+                    scanf("%s", &value);
+                    store(&dataBases, askFrame->val, value);
+                    acquittalFrame->cmd = A_SET;
+                    acquittalFrame->nodeID = nodeID;
+                    acquittalFrame->errorFlag=SUCCESS;
+                    acquittalFrame->dataLength=0;
+                    frame = encodeAcquittalFrame(acquittalFrame);
+                    if(frame[0]==0xff){
+                        DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_SET)");
+                        exit(-1);
+                    }
+                    unsigned long len = strlen(( char *)frame);
+                    res = write(pipeCtr[1],frame,len);
+                    if (res == -1) {
+                        perror("Probléme d'écriture node");
+                        exit(-1);
+                    }
+                }else{
                     res = write(pipeWrite[1], frame, 4);
                     if (res == -1) {
                         perror("Probléme d'écriture node");
                     }
-                }else{
-                    printf("là");
                 }
+                break;
+            case C_LOOKUP:
+                break;
+            case C_DUMP:
+                printf("dump %d", nodeID);
+                if(totalNode-1 != nodeID){
+                    res = write(pipeWrite[1], frame, 4);
+                    if (res == -1) {
+                        perror("Probléme d'écriture node");
+                    }
+                }
+                display(dataBases);
                 acquittalFrame->cmd = A_DUMP;
                 acquittalFrame->nodeID = nodeID;
                 acquittalFrame->errorFlag=SUCCESS;
                 acquittalFrame->dataLength=0;
                 frame = encodeAcquittalFrame(acquittalFrame);
+                if(frame[0]==0xff){
+                    DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_DUMP)");
+                    exit(-1);
+                }
                 unsigned long len = strlen(( char *)frame);
                 res = write(pipeCtr[1],frame,len);
                 if (res == -1) {
@@ -73,40 +105,6 @@ void runNode(int nodeID, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
 
         printf("\n");
     }while (askFrame->cmd!=C_EXIT);
-    /*
-    int buffNode;
-    char * frame;
-
-    PAskFrame askFrame = NULL;
-    //On Lis la trame du précédent du node
-    int res = read(pipeRead[0], &frame, 2);
-    printf("%x",frame[0]);
-    printf("là");
-    for(int i=0;i< strlen(frame);i++){
-        printf("%x ",frame[i]);
-    }
-    printf("\n");
-        /*
-        //close(pipeRead[0]);
-
-        //On Affiche le contenu du node précédent
-        printf("id:%d buffNode:%d\n", nodeID, buffNode);
-        //On l'incrémente de 1 pour s'assurer que l'opération et executer sur tous les node
-        buffNode += 1;
-
-        //on envois se nouveau contenue au node suivant
-        res = write(pipeWrite[1], &buffNode, sizeof(int));
-        if (res == -1)perror("Probléme d'écriture node");
-        //close(pipeWrite[1]);
-
-
-        //On écrit l'id du processus dans le tub en direction du controller
-        res = write(pipeCtr[1], &nodeID, sizeof(int));
-        if (res == -1)perror("Probléme d'écriture ctrl");*/
-        //close(pipeCtr[1]);
-
-    //on quite le process*/
-    printf("exit");
     exit(0);
 }
 

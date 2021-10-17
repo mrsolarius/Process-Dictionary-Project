@@ -7,7 +7,7 @@
 
 #include "DDP.h"
 
-void runNode(int nodeID, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]);
+void runNode(int nodeID,int totalNode, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]);
 
 int closePipes(int pipeCtr[2], int pipeRead[2], int pipeWrite[2]);
 

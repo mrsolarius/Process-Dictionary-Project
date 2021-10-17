@@ -16,8 +16,8 @@ void launchPipes(int nbNodes, int * pipeCtrlRead, int** pipeArr);
 int freeNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
 
 int cmdLauncher(int nbNodes,int * pipeCtrlWrite,int * pipeCtrlRead);
-int readAcquittal(int *pipeCtrlRead, int nbNodes);
+int readAcquittal(int *pipeCtrlRead);
 
 int launchExit(int * pipeCtrlWrite);
-int launchDump(int * pipeCtrlWrite,int nbNodes);
+int launchAsk(int * pipeCtrlWrite, unsigned char cmd, unsigned int val);
 #endif //PROCESS_DICTIONARY_CONTROLLER_H

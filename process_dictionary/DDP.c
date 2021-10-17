@@ -61,7 +61,7 @@ PAskFrame decodeAskFrame(unsigned char *frame) {
     //On teste la taille de la frame
     if (frameLength == 2) {
         //Si la taille et de 2 alors 1 commande autorisé
-        if (frame[0] != C_EXIT) {
+        if (frame[0] == C_SET || frame[0] == C_LOOKUP) {
             DDP_Errno = EBADCMD;
             return error;
         }
@@ -75,7 +75,7 @@ PAskFrame decodeAskFrame(unsigned char *frame) {
         askFrame->val = 0xff;
     } else if (frameLength == 4) {
         //Si la taille et de 4 alors 3 commande autorisé
-        if (frame[0] == C_EXIT) {
+        if (frame[0] == C_EXIT || frame[0] == C_DUMP ) {
             DDP_Errno = EBADCMD;
             return error;
         }
@@ -237,7 +237,7 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
         DDP_Errno = EBADCMD;
         return error;
     }
-    if(askFrame->cmd==C_EXIT) {
+    if(askFrame->cmd==C_EXIT || askFrame->cmd==C_DUMP) {
         length = 2;
     }else{
         length = 4;
@@ -265,7 +265,7 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
     return frame;
 }
 
-unsigned char * encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
+unsigned char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
     unsigned int length;
     unsigned char *frame;
     //Definition du renvoi d'erreur

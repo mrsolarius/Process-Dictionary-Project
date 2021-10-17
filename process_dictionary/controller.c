@@ -70,9 +70,9 @@ void launchPipes(int nbNodes, int *pipeCtrlRead, int **pipeArr){
         if (fork() == 0) {
             //printf("\nfork:%d",i);
             if (i == 0) {
-                runNode(i, pipeCtrlRead, pipeArr[nbNodes - 1], pipeArr[i]);
+                runNode(i, nbNodes, pipeCtrlRead, pipeArr[nbNodes - 1], pipeArr[i]);
             } else {
-                runNode(i, pipeCtrlRead, pipeArr[i - 1], pipeArr[i]);
+                runNode(i, nbNodes, pipeCtrlRead, pipeArr[i - 1], pipeArr[i]);
             }
         }
     }
@@ -96,19 +96,24 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
         switch (val) {
             case 0:
                 launchExit(pipeCtrlWrite);
+                exit = 1;
                 break;
             case 1:
-                printf("set\n");
-                exit = 1;
+                printf("Saisir la cle (decimal number): ");
+                unsigned int key;
+                scanf("%d", &key);
+                launchAsk(pipeCtrlWrite, C_SET, key);
+                readAcquittal(pipeCtrlRead);
                 break;
             case 2:
                 printf("lookup\n");
                 break;
             case 3:
-                launchDump(pipeCtrlWrite,nbNodes);
+                launchAsk(pipeCtrlWrite, C_DUMP, nbNodes);
                 for(int i=0;i<nbNodes;i++) {
-                    readAcquittal(pipeCtrlRead, nbNodes);
+                    readAcquittal(pipeCtrlRead);
                 }
+                printf("Toutes les commandes on effectuer leur dump\n");
                 break;
             default:
                 printf("Votre commande n'est pas reconue veuillez recomancer\n");
@@ -118,16 +123,40 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
     printf("bye bye !\n");
 }
 
-int readAcquittal(int *pipeCtrlRead, int nbNodes){
+int readAcquittal(int *pipeCtrlRead) {
     int bytes = 4096;
-    char * frame = malloc(sizeof (char )*bytes);
+    unsigned char * frame = malloc(sizeof (char) *bytes);
     long res;
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof (AcquittalFrame));
     res = read(pipeCtrlRead[0],frame,bytes);
     acquittalFrame = decodeAcquittalFrame(frame);
-    printf("nodeID : %d, cmd:%x",acquittalFrame->nodeID, acquittalFrame->cmd);/*
-    for(int i=0;i<nbNodes;i++){
-    }*/
+    if(acquittalFrame->cmd==0xff){
+        DDP_perror("controller.c::readAcquittal() call decodeAcquittalFrame()");
+        exit(-1);
+    }
+    switch (acquittalFrame->cmd) {
+        case A_SET:
+            if(acquittalFrame->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution",acquittalFrame->nodeID);
+            }else {
+                printf("Votre donnée à bien était enregistreer par le noeud numéro %d\n", acquittalFrame->nodeID);
+            }
+            break;
+        case A_LOOKUP:
+            if(acquittalFrame->errorFlag == NOT_FOUND){
+                printf("Pas de valeur trouver");
+            }else if(acquittalFrame->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution",acquittalFrame->nodeID);
+            }else{
+                printf("Valeur = %s",acquittalFrame->data);
+            }
+            break;
+        case A_DUMP:
+            if(acquittalFrame->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution",acquittalFrame->nodeID);
+            }
+            break;
+    }
 }
 
 int launchExit(int *pipeCtrlWrite) {
@@ -146,18 +175,18 @@ int launchExit(int *pipeCtrlWrite) {
     return 0;
 }
 
-int launchDump(int *pipeCtrlWrite,int nbNodes) {
+int launchAsk(int *pipeCtrlWrite, unsigned char cmd,unsigned int val) {
     PAskFrame dumpFrame = (PAskFrame) malloc(sizeof(AskFrame));
-    dumpFrame->cmd = C_DUMP;
-    dumpFrame->val = nbNodes;
+    dumpFrame->cmd = cmd;
+    dumpFrame->val = val;
     unsigned char *frame = encodeAskFrame(dumpFrame);
     if (frame[0] == 0xff) {
-        DDP_perror("controller.c::launchExit() call encodeAskFrame()");
+        DDP_perror("controller.c::launchAsk() call encodeAskFrame()");
         exit(-1);
     }
     unsigned int frameLength = strlen((char *) frame);
     if (write(pipeCtrlWrite[1], frame, frameLength) == -1) {
-        perror("controller.c::launchExit() call write()");
+        perror("controller.c::launchAsk() call write()");
         exit(-1);
     }
     return 0;
