@@ -1,5 +1,5 @@
 CC = gcc
-SRCS = main.c DDP.c
+SRCS = main.c DDP.c controller.c node.c
 TEST_SRCS = testDDP.c DDP.c
 OBJS = $(SRCS:.c=.o)
 OBJS_TEST = $(TEST_SRCS:.c=.o)
