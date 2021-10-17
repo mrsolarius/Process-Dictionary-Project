@@ -59,7 +59,7 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
             case C_LOOKUP:
                 break;
             case C_DUMP:
-                printf("DUMP du node %d:\n", nodeID);
+                printf("dump du node %d:\n", nodeID);
                 if(totalNode-1 != nodeID){
                     res = write(pipeWrite[1], frame, 4);
                     if (res == -1) {
