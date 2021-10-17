@@ -111,9 +111,11 @@ void askKey(unsigned char cmd,int * pipeCtrlWrite){
 int readAcquittal(int *pipeCtrlRead) {
     int bytes = 4096;
     unsigned char * frame = malloc(sizeof (char) *bytes);
-    long res;
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof (AcquittalFrame));
-    res = read(pipeCtrlRead[0],frame,bytes);
+    if(read(pipeCtrlRead[0],frame,bytes)==-1){
+        perror("controller.c::readAcquittal() call read()");
+        exit(-1);
+    }
     acquittalFrame = decodeAcquittalFrame(frame);
     if(acquittalFrame->cmd==0xff){
         DDP_perror("controller.c::readAcquittal() call decodeAcquittalFrame()");
@@ -129,7 +131,7 @@ int readAcquittal(int *pipeCtrlRead) {
             break;
         case A_LOOKUP:
             if(acquittalFrame->errorFlag == NOT_FOUND){
-                printf("Pas de valeur trouver");
+                printf("Pas de valeur trouver\n");
             }else if(acquittalFrame->errorFlag == INTERNAL_ERROR){
                 printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
             }else{

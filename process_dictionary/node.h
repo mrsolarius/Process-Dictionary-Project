@@ -13,8 +13,8 @@ int closePipes(int pipeCtr[2], int pipeRead[2], int pipeWrite[2]);
 
 unsigned char * readFrame(int pipeRead[2]);
 
-int sendToController(PAcquittalFrame acquittalFrame,int pipeCtr[2]);
+void sendToController(PAcquittalFrame acquittalFrame,int pipeCtr[2]);
 
-int sendNextNode(PAskFrame askFrame,int pipeWrite[2]);
+void sendNextNode(unsigned char * frame,int pipeWrite[2]);
 
 #endif //PROCESS_DICTIONARY_NODE_H

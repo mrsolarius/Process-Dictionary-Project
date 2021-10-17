@@ -12,12 +12,13 @@
 
 
 void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
+    long res;
+    unsigned char *frame;
+    char *value = NULL;
     PAskFrame askFrame;
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
     Table_entry *dataBases = NULL;
-    long res;
     closePipes(pipeCtr,pipeRead,pipeWrite);
-    unsigned char *frame;
     do{
         frame = readFrame(pipeRead);
         askFrame = decodeAskFrame(frame);
@@ -38,25 +39,35 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
                     acquittalFrame->nodeID = nodeID;
                     acquittalFrame->errorFlag=SUCCESS;
                     acquittalFrame->dataLength=0;
-                    frame = encodeAcquittalFrame(acquittalFrame);
-                    if(frame[0]==0xff){
-                        DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_SET)\n");
-                        exit(-1);
-                    }
-                    unsigned long len = strlen(( char *)frame);
-                    res = write(pipeCtr[1],frame,len);
-                    if (res == -1) {
-                        perror("node.c::runNode() call write() (C_SET To pipeCtr)\n");
-                        exit(-1);
-                    }
+                    sendToController(acquittalFrame,pipeCtr);
                 }else{
-                    res = write(pipeWrite[1], frame, 4);
-                    if (res == -1) {
-                        perror("node.c::runNode() call write() (C_SET To pipeWrite)\n");
-                    }
+                    sendNextNode(frame,pipeWrite);
                 }
                 break;
             case C_LOOKUP:
+                if(askFrame->val%totalNode == nodeID){
+                    value = lookup(dataBases, askFrame->val);
+                    if (value == NULL) {
+                        acquittalFrame->cmd = A_LOOKUP;
+                        acquittalFrame->nodeID = nodeID;
+                        acquittalFrame->errorFlag= NOT_FOUND;
+                        acquittalFrame->dataLength=0;
+                        sendToController(acquittalFrame,pipeCtr);
+                    }else{
+                        unsigned int length = strlen(value);
+                        acquittalFrame->cmd = A_LOOKUP;
+                        acquittalFrame->nodeID = nodeID;
+                        acquittalFrame->errorFlag= SUCCESS;
+                        acquittalFrame->dataLength= length;
+                        acquittalFrame->data=(unsigned char*) malloc(length + 1);
+                        for (int i = 0; i< length; i++) {
+                            acquittalFrame->data[i]=value[i];
+                        }
+                        sendToController(acquittalFrame,pipeCtr);
+                    }
+                }else{
+                    sendNextNode(frame,pipeWrite);
+                }
                 break;
             case C_DUMP:
                 printf("dump du node %d:\n", nodeID);
@@ -71,24 +82,10 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
                 acquittalFrame->nodeID = nodeID;
                 acquittalFrame->errorFlag=SUCCESS;
                 acquittalFrame->dataLength=0;
-                frame = encodeAcquittalFrame(acquittalFrame);
-                if(frame[0]==0xff){
-                    DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_DUMP)\n");
-                    exit(-1);
-                }
-                unsigned long len = strlen(( char *)frame);
-                res = write(pipeCtr[1],frame,len);
-                if (res == -1) {
-                    perror("node.c::runNode() call write() (C_DUMP To pipeCtr)\n");
-                    exit(-1);
-                }
+                sendToController(acquittalFrame,pipeCtr);
                 break;
             case C_EXIT:
-                res = write(pipeWrite[1], frame, 4);
-                if (res == -1) {
-                    perror("node.c::runNode() call write() (C_EXIT To pipeCtr)\n");
-                    exit(-1);
-                }
+                sendNextNode(frame,pipeWrite);
                 break;
         }
     }while (askFrame->cmd!=C_EXIT);
@@ -106,7 +103,7 @@ int closePipes(int * pipeCtr, int * pipeRead, int * pipeWrite){
 }
 
 unsigned char * readFrame(int pipeRead[2]){
-    char nbBytes = 4;
+    char nbBytes = 127;
     unsigned char * frame = malloc(sizeof (char)*nbBytes);
     long res=1;
     res = read(pipeRead[0], frame, nbBytes);
@@ -123,30 +120,25 @@ unsigned char * readFrame(int pipeRead[2]){
     return frame;
 }
 
-int sendToController(PAcquittalFrame acquittalFrame, int pipeCtr[2]){
+void sendToController(PAcquittalFrame acquittalFrame, int pipeCtr[2]){
     unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
+    long res;
     if(frame[0]==0xff){
-        DDP_perror("node.c::sendToController() call encodeAcquittalFrame()");
+        DDP_perror("node.c::runNode() call encodeAcquittalFrame()\n");
         exit(-1);
     }
-    unsigned int frameLength = strlen((char *) frame);
-    if(write(pipeCtr[1],frame,frameLength)==-1){
-        perror("node.c::sendToController() call write()");
+    unsigned long len = strlen(( char *)frame);
+    res = write(pipeCtr[1],frame,len);
+    if (res == -1) {
+        perror("node.c::runNode() call write() (To pipeCtr)\n");
         exit(-1);
     }
-    return 0;
 }
 
-int sendNextNode(PAskFrame askFrame,int pipeWrite[2]) {
-    unsigned char * frame = encodeAskFrame(askFrame);
-    if(frame[0]==0xff){
-        DDP_perror("node.c::sendNextNode() call encodeAskFrame()");
-        exit(-1);
-    }
+void sendNextNode(unsigned char * frame,int pipeWrite[2]) {
     unsigned int frameLength = strlen((char *) frame);
     if(write(pipeWrite[1],frame,frameLength)==-1){
         perror("node.c::sendNextNode() call write()");
         exit(-1);
     }
-    return 0;
 }
