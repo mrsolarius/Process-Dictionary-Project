@@ -28,7 +28,7 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
         switch (askFrame->cmd) {
             case C_SET:
                 if(askFrame->val%totalNode == nodeID){
-                    char value[4000];
+                    char *value = malloc(sizeof(char)*4000);
                     printf("Saisir la valeur (chaine de caracteres):\n");
                     fgets(value, 4000, stdin);
                     if ((strlen(value) > 0) && (value[strlen (value) - 1] == '\n'))
