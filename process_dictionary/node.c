@@ -6,24 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <wait.h>
 #include "node.h"
 #include "table.h"
 
-unsigned char* concat(unsigned char *s1, unsigned char *s2)
-{
-    printf("ici");
-    unsigned char *result = malloc(strlen((char *)s1)+strlen((char *) s2)+1);//+1 pour la terminaison à 0
-    strcpy((char *) result, (char *) s1);
-    strcat((char *) result, (char *) s2);
-    return result;
-}
 
 void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
-    __pid_t pid = getpid();
-    printf("runNode %d", nodeID);
-    PAskFrame askFrame = (PAskFrame) malloc(sizeof(AskFrame));
+    PAskFrame askFrame;
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(PAcquittalFrame));
     Table_entry *dataBases = NULL;
     long res;
@@ -33,15 +22,17 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
         frame = readFrame(pipeRead);
         askFrame = decodeAskFrame(frame);
         if(askFrame->cmd==0xff){
-            DDP_perror("node.c::runNode() call decodeAskFrame()");
+            DDP_perror("node.c::runNode() call decodeAskFrame()\n");
             exit(0);
         }
         switch (askFrame->cmd) {
             case C_SET:
-                if(askFrame->val%totalNode-1){
+                if(askFrame->val%totalNode == nodeID){
                     char value[4000];
-                    printf("Saisir la valeur (chaine de caracteres): ");
-                    scanf("%s", &value);
+                    printf("Saisir la valeur (chaine de caracteres):\n");
+                    fgets(value, 4000, stdin);
+                    if ((strlen(value) > 0) && (value[strlen (value) - 1] == '\n'))
+                        value[strlen (value) - 1] = '\0';
                     store(&dataBases, askFrame->val, value);
                     acquittalFrame->cmd = A_SET;
                     acquittalFrame->nodeID = nodeID;
@@ -49,30 +40,30 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
                     acquittalFrame->dataLength=0;
                     frame = encodeAcquittalFrame(acquittalFrame);
                     if(frame[0]==0xff){
-                        DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_SET)");
+                        DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_SET)\n");
                         exit(-1);
                     }
                     unsigned long len = strlen(( char *)frame);
                     res = write(pipeCtr[1],frame,len);
                     if (res == -1) {
-                        perror("Probléme d'écriture node");
+                        perror("node.c::runNode() call write() (C_SET To pipeCtr)\n");
                         exit(-1);
                     }
                 }else{
                     res = write(pipeWrite[1], frame, 4);
                     if (res == -1) {
-                        perror("Probléme d'écriture node");
+                        perror("node.c::runNode() call write() (C_SET To pipeWrite)\n");
                     }
                 }
                 break;
             case C_LOOKUP:
                 break;
             case C_DUMP:
-                printf("dump %d", nodeID);
+                printf("DUMP du node %d:\n", nodeID);
                 if(totalNode-1 != nodeID){
                     res = write(pipeWrite[1], frame, 4);
                     if (res == -1) {
-                        perror("Probléme d'écriture node");
+                        perror("node.c::runNode() call write() (C_DUMP To pipeWrite)\n");
                     }
                 }
                 display(dataBases);
@@ -82,28 +73,24 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
                 acquittalFrame->dataLength=0;
                 frame = encodeAcquittalFrame(acquittalFrame);
                 if(frame[0]==0xff){
-                    DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_DUMP)");
+                    DDP_perror("node.c::runNode() call encodeAcquittalFrame() (C_DUMP)\n");
                     exit(-1);
                 }
                 unsigned long len = strlen(( char *)frame);
                 res = write(pipeCtr[1],frame,len);
                 if (res == -1) {
-                    perror("Probléme d'écriture node");
+                    perror("node.c::runNode() call write() (C_DUMP To pipeCtr)\n");
                     exit(-1);
                 }
                 break;
             case C_EXIT:
                 res = write(pipeWrite[1], frame, 4);
                 if (res == -1) {
-                    perror("Probléme d'écriture node");
+                    perror("node.c::runNode() call write() (C_EXIT To pipeCtr)\n");
                     exit(-1);
                 }
                 break;
         }
-        //printf("\nnode: %d", nodeID);
-        //printf("\ncmd:%x val:%d ", askFrame->cmd, askFrame->val);
-
-        printf("\n");
     }while (askFrame->cmd!=C_EXIT);
     exit(0);
 }
@@ -119,7 +106,6 @@ int closePipes(int * pipeCtr, int * pipeRead, int * pipeWrite){
 }
 
 unsigned char * readFrame(int pipeRead[2]){
-    printf("readFrame()");
     char nbBytes = 4;
     unsigned char * frame = malloc(sizeof (char)*nbBytes);
     long res=1;

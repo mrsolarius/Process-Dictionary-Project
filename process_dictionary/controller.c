@@ -12,7 +12,6 @@
 #include "node.h"
 
 int runController(int nbNodes) {
-    printf("ctrl:\n");
     //Allocation de la mémoire pour un tableau de nbNode * 2 car deux partie dans un pipe
     int **pipeArr = (int **) malloc(nbNodes * sizeof(int) * 2);
     //Allocation de la mémoire pour le pipe du controller
@@ -23,28 +22,11 @@ int runController(int nbNodes) {
     close(pipeCtrlWrite[0]);
     close(pipeCtrl[1]);
     cmdLauncher(nbNodes, pipeCtrlWrite, pipeCtrl);
-    printf("ici");
-    /*
-    int *pipeCtrlWrite = pipeArr[nbNodes - 1];
-    close(pipeCtrlWrite[0]);
-    close(pipeCtrl[1]);
-    //cmdLauncher(nbNodes, pipeCtrlWrite, pipeCtrl);
-    //Injection de la premier valeur au node 0
-
-    /*
-    int val = 500;
-    int buffCtrl;
-    //On lis les message envoyer par les fis
-    while (read(pipeCtrl[0], &buffCtrl, sizeof(int)) > 0 && buffCtrl != nbNodes - 1) {
-        printf("Signal receive : %d\n", buffCtrl);
-    }
-    printf("Signal receive : %d\n", buffCtrl);*/
     freeNodes(nbNodes, pipeCtrl, pipeArr);
     return 0;
 }
 
 void initPipes(int nbNodes, int *pipeCtrl, int **pipeArr) {
-    printf("initPipes\n");
     for (int i = 0; i < nbNodes; i++) {
         //Allocation de la mémoire pour la ligne de la pipe courent
         pipeArr[i] = (int *) malloc(2 * sizeof(int));
@@ -62,8 +44,6 @@ void initPipes(int nbNodes, int *pipeCtrl, int **pipeArr) {
 }
 
 void launchPipes(int nbNodes, int *pipeCtrlRead, int **pipeArr){
-    printf("launchPipes\n");
-
     for (int i = 0; i < nbNodes; i++) // Générer n node
     {
         //on ne s'occuper ici que des fis pour afficher leur pid et celui de leur père
