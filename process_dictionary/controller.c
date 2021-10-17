@@ -13,21 +13,21 @@ int runController(int nbNodes){
     //Allocation de la mémoire pour un tableau de nbNode * 2 car deux partie dans un pipe
     int **pipeArr = (int **) malloc(nbNodes * sizeof(int) * 2);
     //Allocation de la mémoire pour le pipe du controller
-    int *pipeCtrl = (int *) malloc(2 * sizeof(int));
-    generateNodes(nbNodes, pipeCtrl, pipeArr);
-
+    int *pipeCtrlRead = (int *) malloc(2 * sizeof(int));
+    generateNodes(nbNodes, pipeCtrlRead, pipeArr);
+    int * pipeCtrlWrite = pipeArr[nbNodes - 1];
+    close(pipeCtrlWrite[0]);
     //Injection de la premier valeur au node 0
     int val = 500;
-    write(pipeArr[nbNodes - 1][1], &val, sizeof(int));
+    write(pipeCtrlWrite[1], &val, sizeof(int));
 
     int buffCtrl;
     //On lis les message envoyer par les fis
-    while (read(pipeCtrl[0], &buffCtrl, sizeof(int)) > 0 && buffCtrl != nbNodes - 1){
+    while (read(pipeCtrlRead[0], &buffCtrl, sizeof(int)) > 0 && buffCtrl != nbNodes - 1){
         printf("Signal receive : %d\n", buffCtrl);
     }
     printf("Signal receive : %d\n", buffCtrl);
-    close(pipeCtrl[1]);
-    freeNodes(nbNodes, pipeCtrl, pipeArr);
+    freeNodes(nbNodes, pipeCtrlRead, pipeArr);
     return 0;
 }
 
