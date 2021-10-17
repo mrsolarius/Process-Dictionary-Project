@@ -9,8 +9,15 @@
 
 int runController(int nbNodes);
 
-int generateNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
+void initPipes(int nbNodes, int * pipeCtrl, int** pipeArr);
+
+void launchPipes(int nbNodes, int * pipeCtrlRead, int** pipeArr);
 
 int freeNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
 
+int cmdLauncher(int nbNodes,int * pipeCtrlWrite,int * pipeCtrlRead);
+int readAcquittal(int *pipeCtrlRead, int nbNodes);
+
+int launchExit(int * pipeCtrlWrite);
+int launchDump(int * pipeCtrlWrite,int nbNodes);
 #endif //PROCESS_DICTIONARY_CONTROLLER_H

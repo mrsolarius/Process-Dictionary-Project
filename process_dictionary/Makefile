@@ -9,7 +9,6 @@ TEST= ddpTest
 all: test run
 
 run:$(EXEC)
-	./$(EXEC) 5
 
 test:$(TEST)
 

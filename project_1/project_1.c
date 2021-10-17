@@ -7,7 +7,7 @@
 int execFis(int appID, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
     int buffNode=0;
     long int res;
-
+    sleep(20);
     //Avant de commencer notre traitement on ferme les lecture/ecriture qui ne nous serve pas sur nos différent pipes
     //On ferme en lecture le pipe du controller
     close(pipeCtr[0]);
@@ -77,14 +77,18 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < nbFis; i++) // Generer n fis
     {
         //on ne s'occuper ici que des fis pour afficher leur pid et celui de leur père
+        sleep(1);
         if (fork() == 0) {
             if(i==0){
                 execFis(i,pipeCtrl,pipeArr[nbFis-1],pipeArr[i]);
             }else{
                 execFis(i,pipeCtrl,pipeArr[i-1],pipeArr[i]);
             }
+        }else{
+            printf("\nparent:%d",i);
         }
     }
+    printf("\nparent init\n");
     int buffCtrl;
     //On lis les message envoyer par les fis
     while (read(pipeCtrl[0], &buffCtrl, sizeof(int)) > 0 && buffCtrl != nbFis - 1){
