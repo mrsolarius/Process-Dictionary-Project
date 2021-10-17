@@ -15,7 +15,7 @@ int runController(int nbNodes){
     //Allocation de la mémoire pour le pipe du controller
     int *pipeCtrlRead = (int *) malloc(2 * sizeof(int));
     generateNodes(nbNodes, pipeCtrlRead, pipeArr);
-    int * pipeCtrlWrite = pipeArr[nbNodes - 1];
+    int *pipeCtrlWrite = pipeArr[nbNodes - 1];
     close(pipeCtrlWrite[0]);
     //Injection de la premier valeur au node 0
     int val = 500;
