@@ -79,14 +79,12 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
                 exit = 1;
                 break;
             case 1:
-                printf("Saisir la cle (decimal number): ");
-                unsigned int key;
-                scanf("%d", &key);
-                launchAsk(pipeCtrlWrite, C_SET, key);
+                askKey(C_SET,pipeCtrlWrite);
                 readAcquittal(pipeCtrlRead);
                 break;
             case 2:
-                printf("lookup\n");
+                askKey(C_LOOKUP,pipeCtrlWrite);
+                readAcquittal(pipeCtrlRead);
                 break;
             case 3:
                 launchAsk(pipeCtrlWrite, C_DUMP, nbNodes);
@@ -103,6 +101,13 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
     printf("bye bye !\n");
 }
 
+void askKey(unsigned char cmd,int * pipeCtrlWrite){
+    unsigned int key;
+    printf("Saisir la cle (decimal number): ");
+    scanf("%d", &key);
+    launchAsk(pipeCtrlWrite, cmd, key);
+}
+
 int readAcquittal(int *pipeCtrlRead) {
     int bytes = 4096;
     unsigned char * frame = malloc(sizeof (char) *bytes);
@@ -117,7 +122,7 @@ int readAcquittal(int *pipeCtrlRead) {
     switch (acquittalFrame->cmd) {
         case A_SET:
             if(acquittalFrame->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution",acquittalFrame->nodeID);
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
             }else {
                 printf("Votre donnée à bien était enregistreer par le noeud numéro %d\n", acquittalFrame->nodeID);
             }
@@ -126,14 +131,14 @@ int readAcquittal(int *pipeCtrlRead) {
             if(acquittalFrame->errorFlag == NOT_FOUND){
                 printf("Pas de valeur trouver");
             }else if(acquittalFrame->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution",acquittalFrame->nodeID);
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
             }else{
                 printf("Valeur = %s",acquittalFrame->data);
             }
             break;
         case A_DUMP:
             if(acquittalFrame->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution",acquittalFrame->nodeID);
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
             }
             break;
     }

@@ -16,6 +16,8 @@ void launchPipes(int nbNodes, int * pipeCtrlRead, int** pipeArr);
 int freeNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
 
 int cmdLauncher(int nbNodes,int * pipeCtrlWrite,int * pipeCtrlRead);
+void askKey(unsigned char cmd,int * pipeCtrlWrite);
+
 int readAcquittal(int *pipeCtrlRead);
 
 int launchExit(int * pipeCtrlWrite);
