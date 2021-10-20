@@ -11,6 +11,8 @@
 #include "controller.h"
 #include "node.h"
 
+unsigned int countAcquittal = 0;
+
 int runController(int nbNodes) {
     //Allocation de la mémoire pour un tableau de nbNode * 2 car deux partie dans un pipe
     int **pipeArr = (int **) malloc(nbNodes * sizeof(int) * 2);
@@ -88,7 +90,9 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
                 break;
             case 3:
                 launchAsk(pipeCtrlWrite, C_DUMP, nbNodes);
-                for(int i=0;i<nbNodes;i++) {
+                printf("nb nodes %d\n",nbNodes);
+                printf("c acquittal : %d\n", countAcquittal);
+                while(countAcquittal<nbNodes){
                     readAcquittal(pipeCtrlRead);
                 }
                 printf("Toutes les commandes on effectuer leur dump\n");
@@ -97,6 +101,7 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
                 printf("Votre commande n'est pas reconue veuillez recomancer\n");
                 break;
         }
+        countAcquittal = 0;
     }
     printf("bye bye !\n");
 }
@@ -108,38 +113,64 @@ void askKey(unsigned char cmd,int * pipeCtrlWrite){
     launchAsk(pipeCtrlWrite, cmd, key);
 }
 
-int readAcquittal(int *pipeCtrlRead) {
-    int bytes = 4096;
-    unsigned char * frame = malloc(sizeof (char) *bytes);
+void readAcquittal(int *pipeCtrlRead) {
+    int bytes = 128;
+    unsigned char * frame = malloc(sizeof (unsigned char) *bytes);
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof (AcquittalFrame));
     if(read(pipeCtrlRead[0],frame,bytes)==-1){
         perror("controller.c::readAcquittal() call read()");
         exit(-1);
     }
-    acquittalFrame = decodeAcquittalFrame(frame);
-    if(acquittalFrame->cmd==0xff){
+    unsigned int acquittalLen = 0;
+    PAcquittalFrame * acquittalArray =malloc(sizeof(PAcquittalFrame));
+    for (int i=0, len = 0, start=0; i < bytes ; ++i, ++len) {
+        unsigned char * str;
+        str = malloc(sizeof (unsigned char ));
+        strncpy( str, frame+start,len);
+        if(str[0]!='\0') {
+            printf("start : %d len: %d :",start,len);
+            print_hex(str);
+            acquittalFrame = decodeAcquittalFrame(str);
+            printf("cmd : %x", acquittalFrame->nodeID);
+            if (acquittalFrame->cmd != 0xff) {
+                printf("start : %d len: %d work:\n", start, len);
+
+                acquittalArray = realloc(acquittalArray, (acquittalLen + 1) * 2 * sizeof(PAcquittalFrame));
+                acquittalArray[acquittalLen] = acquittalFrame;
+                printf("node from decode : %d\n", acquittalArray[acquittalLen]->nodeID);
+                start = len;
+                len = 0;
+                acquittalLen++;
+                countAcquittal++;
+                DDP_Errno = -1;
+            }
+        }
+        free(str);
+    }
+    free(frame);
+    if(acquittalArray[0]->cmd==0xff){
         DDP_perror("controller.c::readAcquittal() call decodeAcquittalFrame()");
         exit(-1);
     }
-    switch (acquittalFrame->cmd) {
+    switch (acquittalArray[0]->cmd) {
         case A_SET:
-            if(acquittalFrame->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
+            if(acquittalArray[0]->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalArray[0]->nodeID);
             }else {
-                printf("Votre donnée à bien était enregistreer par le noeud numéro %d\n", acquittalFrame->nodeID);
+                printf("Votre donnée à bien était enregistreer par le noeud numéro %d\n", acquittalArray[0]->nodeID);
             }
             break;
         case A_LOOKUP:
-            if(acquittalFrame->errorFlag == NOT_FOUND){
+            if(acquittalArray[0]->errorFlag == NOT_FOUND){
                 printf("Pas de valeur trouver\n");
-            }else if(acquittalFrame->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
+            }else if(acquittalArray[0]->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalArray[0]->nodeID);
             }else{
-                printf("Valeur = %s",acquittalFrame->data);
+                printf("Valeur = %s",acquittalArray[0]->data);
             }
             break;
         case A_DUMP:
-            if(acquittalFrame->errorFlag == INTERNAL_ERROR){
+            if(acquittalArray[0]->errorFlag == INTERNAL_ERROR){
                 printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
             }
             break;
@@ -177,4 +208,70 @@ int launchAsk(int *pipeCtrlWrite, unsigned char cmd,unsigned int val) {
         exit(-1);
     }
     return 0;
+}
+
+
+unsigned int getNbFrames(unsigned char * framesStream){
+    unsigned int lenFrames = strlen((char * )framesStream);
+    unsigned int i=0,k=0;
+    for(i=0,k=0;i<lenFrames;i++){
+        if(framesStream[i]==END_FRAME){
+            k++;
+        }
+    }
+    return k;
+}
+void print_hex(const unsigned char *s)
+{
+    while(*s)
+        printf("%02x-", (unsigned int) *s++);
+    printf("\n");
+}
+
+PAcquittalFrame * deserialisation(unsigned char * frameStream,unsigned int bufferSize, unsigned int * lenghtFrame){
+    printf("len : %d",*lenghtFrame);
+    lenghtFrame = 0;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(AcquittalFrame));
+    PAcquittalFrame * acquittalArray =malloc(sizeof(PAcquittalFrame));
+    for (int i=0, len = 0, start=0; i < bufferSize ; ++i, ++len) {
+        unsigned char * str;
+        str = calloc(bufferSize,sizeof (unsigned char ));
+        printf("start : %d len: %d :",start,len);
+        strncpy( str, frameStream+start,len);
+        print_hex(str);
+        acquittalFrame = decodeAcquittalFrame(str);
+        printf("cmd : %x", acquittalFrame->nodeID);
+        if(acquittalFrame->cmd!=0xff){
+            printf("start : %d len: %d work:",start,len);
+            acquittalArray = realloc(acquittalArray, (*lenghtFrame + 1) * 2 * sizeof(AcquittalFrame));
+            acquittalArray[*lenghtFrame] = acquittalFrame;
+            printf("là");
+            printf("node from decode : %d\n",acquittalArray[*lenghtFrame]->nodeID);
+            printf("ici");
+            start=len;
+            len=0;
+            *lenghtFrame++;
+            countAcquittal++;
+            DDP_Errno = -1;
+        }
+        free(str);
+    }
+    printf("len : %d",*lenghtFrame);
+    return acquittalArray;
+}
+
+unsigned char * substr(unsigned char *chaineSource,int pos,int len) {
+    // Retourne la sous-chaine de la chaine chaineSource
+    // depuis la position pos sur la longueur len
+
+    unsigned char * dest=NULL;
+    if (len>0) {
+        /* allocation et mise à zéro */
+        dest = (unsigned char *)calloc(len+1, 1);
+        /* vérification de la réussite de l'allocation*/
+        if(NULL != dest) {
+            strncat((char *)dest,(char *)chaineSource+pos,len);
+        }
+    }
+    return dest;
 }

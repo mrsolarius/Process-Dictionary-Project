@@ -243,7 +243,7 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
         length = 4;
     }
 
-    frame = malloc(sizeof(char) * length);
+    frame = malloc(sizeof(unsigned char) * length);
     if (length == 2) {
         frame[0] = askFrame->cmd;
         frame[1] = END_FRAME;
@@ -261,7 +261,7 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
         DDP_Errno = ENOTDDP;
         return error;
     }
-
+    free(error);
     return frame;
 }
 
