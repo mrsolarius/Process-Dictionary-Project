@@ -21,6 +21,13 @@
 int testPassed = 0;
 int totalTest = 0;
 
+void print_hex(const unsigned char *s)
+{
+    while(*s)
+        printf("%02x-", (unsigned int) *s++);
+    printf("\n");
+}
+
 void printTitle(char *title) {
     unsigned int size = strlen(title);
     printf(COLOR_BLUE"\n+");
@@ -531,6 +538,10 @@ bool encodeAcquittalFrame_itShouldEncodeThisFrame(){
     }
     unsigned char * frame = encodeAcquittalFrame(acquittalFrame);
     free(acquittalFrame);
+    printf("\n");
+    print_hex(frame);
+    printf("\n");
+    print_hex(expectedFrame);
     //La frame et correctement formé et devrais être egale à expectedFrame
     return memcmp(expectedFrame,frame,15)==0;
 }

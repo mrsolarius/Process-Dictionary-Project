@@ -112,7 +112,7 @@ PAcquittalFrame decodeAcquittalFrame(unsigned char *frame) {
         return error;
     }
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(AcquittalFrame));
-    unsigned int frameLength = strlen((char *) frame);
+    unsigned int frameLength = getCharLength(frame);
     //On teste la taille de la frame
     if (frameLength == 4) {
         switch (frame[0]) {
@@ -207,7 +207,7 @@ PAcquittalFrame decodeAcquittalFrame(unsigned char *frame) {
         }
 
         acquittalFrame->data = malloc(sizeof(char) * length);
-        for (int i = 5, j = 0; i < frameLength - length + 1; i++, j++) {
+        for (int i = 5, j = 0; i < frameLength - 1; i++, j++) {
             acquittalFrame->data[j] = frame[i];
         }
 
@@ -265,7 +265,7 @@ unsigned char *encodeAskFrame(PAskFrame askFrame) {
     return frame;
 }
 
-unsigned char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
+unsigned char * encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
     unsigned int length;
     unsigned char *frame;
     //Definition du renvoi d'erreur
@@ -280,7 +280,7 @@ unsigned char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
     }
 
     if(acquittalFrame->dataLength>0){
-        length =  6 + acquittalFrame->dataLength;
+        length =  7 + acquittalFrame->dataLength;
         frame = malloc(sizeof(char) * length);
         if (acquittalFrame->cmd == A_SET || acquittalFrame->cmd == A_DUMP) {
             DDP_Errno = EBADCMD;
@@ -323,13 +323,17 @@ unsigned char *encodeAcquittalFrame(PAcquittalFrame acquittalFrame) {
         //Séparation de l'unsigned int en 2 char couper en octer
         frame[3] = ((acquittalFrame->dataLength >> 8) & 0xFF)+1;
         frame[4] = (acquittalFrame->dataLength + 1 ) & 0xFF;
-        unsigned int i,j;
         //Parcoure des données de la structure est inisialisation de celle ci dans la trame
-        for (i = 5, j = 0; j < acquittalFrame->dataLength; i++, j++) {
-            frame[i]=acquittalFrame->data[j];
+        for (unsigned int  i = 5, j = 0; j <= acquittalFrame->dataLength; i++, j++) {
+            if(j < acquittalFrame->dataLength) {
+                frame[i] = acquittalFrame->data[j];
+            }else {
+                frame[i] = END_FRAME;
+                frame[i + 1] = '\0';
+            }
         }
         //On termine par le end frame (défini par i+1 pour être à la fin du tableau)
-        frame[i+1]=END_FRAME;
+        //frame[acquittalFrame->dataLength]=END_FRAME;
     } else{
         length = 4;
         frame = malloc(sizeof(char) * length);
@@ -389,4 +393,13 @@ void DDP_perror(char *data) {
     } else {
         fprintf(stderr, "\n%s : Success\n", data);
     }
+}
+
+unsigned char getCharLength(unsigned char * val){
+    unsigned char length = 0;
+    while(*val) {
+        length++;
+        val++;
+    }
+    return length;
 }

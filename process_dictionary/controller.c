@@ -115,63 +115,61 @@ void askKey(unsigned char cmd,int * pipeCtrlWrite){
 
 void readAcquittal(int *pipeCtrlRead) {
     int bytes = 128;
-    unsigned char * frame = malloc(sizeof (unsigned char) *bytes);
-    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof (AcquittalFrame));
+    unsigned char frame[bytes];
+    PAcquittalFrame acquittalFinal = (PAcquittalFrame) malloc(sizeof (AcquittalFrame));
     if(read(pipeCtrlRead[0],frame,bytes)==-1){
         perror("controller.c::readAcquittal() call read()");
         exit(-1);
     }
     unsigned int acquittalLen = 0;
-    PAcquittalFrame * acquittalArray =malloc(sizeof(PAcquittalFrame));
-    for (int i=0, len = 0, start=0; i < bytes ; ++i, ++len) {
-        unsigned char * str;
-        str = malloc(sizeof (unsigned char ));
-        strncpy( str, frame+start,len);
-        if(str[0]!='\0') {
-            printf("start : %d len: %d :",start,len);
-            print_hex(str);
-            acquittalFrame = decodeAcquittalFrame(str);
-            printf("cmd : %x", acquittalFrame->nodeID);
-            if (acquittalFrame->cmd != 0xff) {
-                printf("start : %d len: %d work:\n", start, len);
-
-                acquittalArray = realloc(acquittalArray, (acquittalLen + 1) * 2 * sizeof(PAcquittalFrame));
-                acquittalArray[acquittalLen] = acquittalFrame;
-                printf("node from decode : %d\n", acquittalArray[acquittalLen]->nodeID);
-                start = len;
-                len = 0;
-                acquittalLen++;
-                countAcquittal++;
-                DDP_Errno = -1;
+    unsigned int passed = 0;
+    PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof (AcquittalFrame));
+    for (int i = 0, len = 0, start = 0; i < bytes; ++i, ++len) {
+        unsigned char *str;
+        str = malloc(sizeof(unsigned char));
+        strncpy(str, frame + start, len);
+        acquittalFrame = NULL;
+        acquittalFrame = decodeAcquittalFrame(str);
+        if (acquittalFrame->cmd != 0xff) {
+            if (acquittalLen == 0) {
+                acquittalFinal = acquittalFrame;
             }
+            //printf("Reception de l'aquitement du neud n°%d\n",acquittalFrame->nodeID);
+            start = len;
+            len = 0;
+            acquittalLen++;
+            countAcquittal++;
+            DDP_Errno = -1;
+            passed=1;
         }
         free(str);
     }
-    free(frame);
-    if(acquittalArray[0]->cmd==0xff){
+    free(acquittalFrame);
+
+    if(acquittalFinal->cmd==0xff){
         DDP_perror("controller.c::readAcquittal() call decodeAcquittalFrame()");
         exit(-1);
     }
-    switch (acquittalArray[0]->cmd) {
+    switch (acquittalFinal->cmd) {
         case A_SET:
-            if(acquittalArray[0]->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalArray[0]->nodeID);
+            if(acquittalFinal->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFinal->nodeID);
             }else {
-                printf("Votre donnée à bien était enregistreer par le noeud numéro %d\n", acquittalArray[0]->nodeID);
+                printf("Votre donnée à bien était enregistreer par le noeud numéro %d\n", acquittalFinal->nodeID);
             }
             break;
         case A_LOOKUP:
-            if(acquittalArray[0]->errorFlag == NOT_FOUND){
+            if(acquittalFinal->errorFlag == NOT_FOUND){
                 printf("Pas de valeur trouver\n");
-            }else if(acquittalArray[0]->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalArray[0]->nodeID);
+            }else if(acquittalFinal->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFinal->nodeID);
             }else{
-                printf("Valeur = %s",acquittalArray[0]->data);
+                printf("Valeur (neud n°%d) = %s\n",acquittalFinal->nodeID,acquittalFinal->data);
             }
             break;
         case A_DUMP:
-            if(acquittalArray[0]->errorFlag == INTERNAL_ERROR){
-                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFrame->nodeID);
+            if(acquittalFinal->errorFlag == INTERNAL_ERROR){
+                printf("Le processus %d à subit une erreur lors de sont execution\n",acquittalFinal->nodeID);
             }
             break;
     }

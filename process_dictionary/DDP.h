@@ -214,4 +214,6 @@ unsigned char * encodeAcquittalFrame(PAcquittalFrame acquittalFrame);
  */
 void DDP_perror(char* msg);
 
+unsigned char getCharLength(unsigned char * val);
+
 #endif //PROCESS_DICTIONARY_PROJECT_DDP_H

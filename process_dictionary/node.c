@@ -10,7 +10,7 @@
 #include "table.h"
 
 
-void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
+void runNode(const int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pipeWrite[2]){
     long res;
     unsigned char *frame;
     char *value = NULL;
@@ -53,13 +53,13 @@ void runNode(int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], int pip
                         acquittalFrame->dataLength=0;
                         sendToController(acquittalFrame,pipeCtr);
                     }else{
-                        unsigned int length = strlen(value);
+                        unsigned int length = getCharLength((unsigned char *) value);
                         acquittalFrame->cmd = A_LOOKUP;
                         acquittalFrame->nodeID = nodeID;
                         acquittalFrame->errorFlag= SUCCESS;
                         acquittalFrame->dataLength= length;
-                        acquittalFrame->data=(unsigned char*) malloc(length + 1);
-                        for (int i = 0; i< length; i++) {
+                        acquittalFrame->data=malloc(sizeof(char) * length);
+                        for(int i = 0; i<length;i++){
                             acquittalFrame->data[i]=value[i];
                         }
                         sendToController(acquittalFrame,pipeCtr);
