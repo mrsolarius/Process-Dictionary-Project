@@ -90,8 +90,6 @@ int cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
                 break;
             case 3:
                 launchAsk(pipeCtrlWrite, C_DUMP, nbNodes);
-                printf("nb nodes %d\n",nbNodes);
-                printf("c acquittal : %d\n", countAcquittal);
                 while(countAcquittal<nbNodes){
                     readAcquittal(pipeCtrlRead);
                 }
