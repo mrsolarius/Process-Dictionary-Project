@@ -23,7 +23,7 @@ void runNode(const int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], i
         askFrame = decodeAskFrame(frame);
         if(askFrame->cmd==0xff){
             DDP_perror("node.c::runNode() call decodeAskFrame()\n");
-            exit(0);
+            exit(-1);
         }
         switch (askFrame->cmd) {
             case C_SET:
@@ -71,10 +71,7 @@ void runNode(const int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], i
             case C_DUMP:
                 printf("dump du node %d:\n", nodeID);
                 if(totalNode-1 != nodeID){
-                    res = write(pipeWrite[1], frame, 4);
-                    if (res == -1) {
-                        perror("node.c::runNode() call write() (C_DUMP To pipeWrite)\n");
-                    }
+                    sendNextNode(frame,pipeWrite);
                 }
                 display(dataBases);
                 acquittalFrame->cmd = A_DUMP;
@@ -91,7 +88,7 @@ void runNode(const int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], i
     exit(0);
 }
 
-int closePipes(int * pipeCtr, int * pipeRead, int * pipeWrite){
+void closePipes(int * pipeCtr, int * pipeRead, int * pipeWrite){
     //Avant de commencer notre traitement on ferme les lecture/ecriture qui ne nous serve pas sur nos différent pipes
     //On ferme en lecture le pipe du controller
     close(pipeCtr[0]);
