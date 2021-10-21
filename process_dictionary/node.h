@@ -40,10 +40,39 @@ void runNode(int nodeID,int totalNode, int pipeCtr[2], int pipeRead[2], int pipe
  */
 void closePipes(int pipeCtr[2], int pipeRead[2], int pipeWrite[2]);
 
+/**
+ * Nom :
+ *      readFrame - permet de lire le contenue du pipe passer en parameter et le renvoyer sous fourme d'un tableau de
+ *      unsigned char
+ * Paramètres :
+ *      @param pipeRead pipe de lecture du node
+ * Retour :
+ *      @return un tableau de unsigned char *
+ */
 unsigned char * readFrame(int pipeRead[2]);
 
+/**
+ * Nom :
+ *      sendToController - permet d'envoyer au pipe passer en parameter la structure acquittal de trame.
+ * Paramètres :
+ *      @param acquittalFrame correspond à la structure d'une trame d'acquittement destinée au contrôleur
+ *      @param pipeCtr pipe destiner au contrôleur
+ * Erreurs :
+ *      Peut renvoyer deux erreur : une erreur de type DDP et une erreur d'écriture dans le pipe du contrôleur
+ */
 void sendToController(PAcquittalFrame acquittalFrame,int pipeCtr[2]);
 
+/**
+ * Nom :
+ *      sendNextNode - permet d'envoyer au pipe passer en parameter la trame indiquer en paramètres
+ * Description :
+ *      Cette fonction permet de renvoyer la trame reçu du dernier noeud vers le noeud suivant
+ * Paramètres :
+ *      @param frame correspond au tableau de unsigned char à envoyer
+ *      @param pipeWrite correspond au pipe d'écriture destiner au noeud suivant
+ * Erreurs :
+ *      Peur renvoyer une erreur d'écriture
+ */
 void sendNextNode(unsigned char * frame,int pipeWrite[2]);
 
 #endif //PROCESS_DICTIONARY_NODE_H
