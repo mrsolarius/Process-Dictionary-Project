@@ -160,7 +160,7 @@ bool decodeAcquittalFrame_itShouldThrowsENOTDDPError() {
     DDP_Errno = -1;
     //permet de tester pour une taille non détérminer supérieur à 4
     unsigned char frame[] = {A_LOOKUP, 'n', 'o', 't', ' ', 'a', ' ', 'f', 'r', 'a', 'm'};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,11);
     //La trame envoyer commence par une commande mais la suite n'existe pas donc ce n'est pas une trame du
     //protocole DDP on renvoie l'erreur ENOTDDP
     return (DDP_Errno == ENOTDDP) && (res->cmd == 0xff);
@@ -170,7 +170,7 @@ bool decodeAcquittalFrame_itShouldThrowsENOTDDPError_2() {
     DDP_Errno = -1;
     //Permet de tester pour une taille de 4 pille
     unsigned char frame[] = {A_SET, 'n', 'o', 't'};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //La trame envoyer commence par une commande mais la suite n'existe pas donc ce n'est pas une trame du
     //protocole DDP on renvoie l'erreur ENOTDDP
     return (DDP_Errno == ENOTDDP) && (res->cmd == 0xff);
@@ -180,7 +180,7 @@ bool decodeAcquittalFrame_itShouldThrowsENOTDDPError_3() {
     DDP_Errno = -1;
     //Permet de tester pour une taille inférieur à 4
     unsigned char frame[] = {A_SET, 'n', 'o'};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,3);
     //La trame envoyer commence par une commande mais la suite n'existe pas donc ce n'est pas une trame du
     //protocole DDP on renvoie l'erreur ENOTDDP
     return (DDP_Errno == ENOTDDP) && (res->cmd == 0xff);
@@ -189,7 +189,7 @@ bool decodeAcquittalFrame_itShouldThrowsENOTDDPError_3() {
 bool decodeAcquittalFrame_itShouldThrowsENOTDDPError_4() {
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 1, 0x55, END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //La trame utilise un drapeau inconue par le protocole DDP on renvoie l'erreur ENOTDDP
     return (DDP_Errno == ENOTDDP) && (res->cmd == 0xff);
 }
@@ -197,7 +197,7 @@ bool decodeAcquittalFrame_itShouldThrowsENOTDDPError_4() {
 bool decodeAcquittalFrame_itShouldThrowENOTAQIT() {
     DDP_Errno = -1;
     unsigned char frame[] = {C_SET, 250, SUCCESS, END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //La trame envoyer et correct cependant la commande C_SET n'est pas une commande de type ACQUITTAL
     //il faut donc renvoyer l'erreur ENOTAQIT
     return (DDP_Errno == ENOTAQIT) && (res->cmd == 0xff);
@@ -206,7 +206,7 @@ bool decodeAcquittalFrame_itShouldThrowENOTAQIT() {
 bool decodeAcquittalFrame_itShouldThrowEWRONGNFLAG_ASET() {
     DDP_Errno = -1;
     unsigned char frame[] = {A_SET, 1, NOT_FOUND, END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //Le flag d'erreur not found n'est pas possible pour la trame A_SET
     //Il faut donc renvoyer WRONG NOT FOUND FLAG
     return (DDP_Errno == EWRONGNFLAG) && (res->cmd == 0xff);
@@ -215,7 +215,7 @@ bool decodeAcquittalFrame_itShouldThrowEWRONGNFLAG_ASET() {
 bool decodeAcquittalFrame_itShouldThrowEWRONGNFLAG_ADUMP() {
     DDP_Errno = -1;
     unsigned char frame[] = {A_DUMP, 1, NOT_FOUND, END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //Le flag d'erreur not found n'est pas possible pour la trame A_DUMP
     //Il faut donc renvoyer WRONG NOT FOUND FLAG
     return (DDP_Errno == EWRONGNFLAG) && (res->cmd == 0xff);
@@ -224,7 +224,7 @@ bool decodeAcquittalFrame_itShouldThrowEWRONGNFLAG_ADUMP() {
 bool decodeAcquittalFrame_itShouldThrowEWRONGSFLAG_ALOOKUP() {
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 1, INTERNAL_ERROR, 0x0+1,0x2+1,'h','i', END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,8);
     //Le flag d'erreur INTERNAL_ERROR ou NOT_FOUND n'est pas possible pour la trame A_LOOKUP contenant des données
     //Il faut donc renvoyer WRONG ERROR FLAG
     return (DDP_Errno == EWRONGEFLAG) && (res->cmd == 0xff);
@@ -233,7 +233,7 @@ bool decodeAcquittalFrame_itShouldThrowEWRONGSFLAG_ALOOKUP() {
 bool decodeAcquittalFrame_itShouldThrowEWRONGEFLAG_ALOOKUP() {
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 1, SUCCESS, END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //Le flag de success n'est pas autoriser si aucune donné lui sont associer pour un A_LOOKUP
     //Il faut donc renvoyer WRONG SUCCESS FLAG
     return (DDP_Errno == EWRONGSFLAG) && (res->cmd == 0xff);
@@ -242,7 +242,7 @@ bool decodeAcquittalFrame_itShouldThrowEWRONGEFLAG_ALOOKUP() {
 bool decodeAcquittalFrame_itShouldCorrectlyDecodeThisFrame() {
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 0 + 1, INTERNAL_ERROR, END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,4);
     //Ici la trame et bien composer tous devrais fonctioner
     return (
                    (
@@ -259,7 +259,7 @@ bool decodeAcquittalFrame_itShouldCorrectlyDecodeThisFrame() {
 bool decodeAcquittalFrame_itShouldThrowEBADCMD(){
     DDP_Errno = -1;
     unsigned char frame[] = {A_DUMP, 0 + 1, SUCCESS, 0x0+1,0x2+1,'h','i',END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,8);
     //Un A_DUMP ne peut pas renvoyer de donnée c'est un mauvais choix de donné
     //Il faut renvoyer une erreur de BAD COMMANDE
     return (DDP_Errno == EBADCMD) && (res->cmd == 0xff);
@@ -268,7 +268,7 @@ bool decodeAcquittalFrame_itShouldThrowEBADCMD(){
 bool decodeAcquittalFrame_itShouldThrowENOTDDPError_4(){
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 0 + 1, 0x55, 0x0+1,0x2+1,'h','i',END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,8);
     //Le flag 0x55 n'existe pas dans DDP il faut donc renvoyer l'erreur NOT DDP
     return (DDP_Errno == ENOTDDP) && (res->cmd == 0xff);
 }
@@ -276,7 +276,7 @@ bool decodeAcquittalFrame_itShouldThrowENOTDDPError_4(){
 bool decodeAcquittalFrame_itShouldThrowEWRONGEFLAG(){
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 0 + 1, NOT_FOUND, 0x0+1,0x2+1,'h','i',END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,8);
     //Ici la derniere valeur du tableau devrais être END_FRAME or ici ce n'est que 0x55
     //On s'attend donc à recevoir l'erreur NO END FLAG
     return (DDP_Errno == EWRONGEFLAG) && (res->cmd == 0xff);
@@ -285,7 +285,7 @@ bool decodeAcquittalFrame_itShouldThrowEWRONGEFLAG(){
 bool decodeAcquittalFrame_itShouldThrowENOENDFLAG_2(){
         DDP_Errno = -1;
         unsigned char frame[] = {A_LOOKUP, 0 + 1, SUCCESS, 0x0+1,0x2+1,'h','i',0xEE};
-        PAcquittalFrame res = decodeAcquittalFrame(frame);
+        PAcquittalFrame res = decodeAcquittalFrame(frame,8);
         //Ici la derniere valeur du tableau devrais être END_FRAME or ici ce n'est que 0xEE
         //On s'attend donc à recevoir l'erreur NO END FLAG
         return (DDP_Errno == ENOENDFLAG) && (res->cmd == 0xff);
@@ -294,7 +294,7 @@ bool decodeAcquittalFrame_itShouldThrowENOENDFLAG_2(){
 bool decodeAcquittalFrame_itShouldThrowEWRONGLEN(){
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 0 + 1, SUCCESS, 0x0 + 1,0x3 + 1,'h','i',END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,8);
     //Ici la taille indiquer par la partie data length et de 3 or la longeurs du tableau de donnée ici est de 2
     //Il faut donc renvoyer une erreur de WRONG LENGTH
     return (DDP_Errno == EWRONGLEN) && (res->cmd == 0xff);
@@ -303,7 +303,7 @@ bool decodeAcquittalFrame_itShouldThrowEWRONGLEN(){
 bool decodeAcquittalFrame_itShouldCorrectlyDecodeThisFrame_2(){
     DDP_Errno = -1;
     unsigned char frame[] = {A_LOOKUP, 0 + 1, SUCCESS, 0x0 + 1,0x2 + 1,'h','i',END_FRAME};
-    PAcquittalFrame res = decodeAcquittalFrame(frame);
+    PAcquittalFrame res = decodeAcquittalFrame(frame,8);
     //Ici la trame et bien composer tous devrais fonctioner
     return (
                    (
