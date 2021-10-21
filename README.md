@@ -179,7 +179,7 @@ Le node id correspond à l'identifiant du processus, il est contenu entre 0 et 2
 
  Cet id permet au contrôleur de savoir qui a récupéré l'information qu'il a demandé parmi ses fils
 
- sur les actions globales comme dump, cela permet aussi au contrôleur d'attendre que tous les processus aient fini le traitement.  Avant d'en commencer un nouveau.
+ sur les actions globales comme dump, cela permet aussi au contrôleur d'attendre que tous les processus aient fini le traitement avant d'en commencer un nouveau.
 
 **Exemple :**
 
@@ -224,3 +224,18 @@ Note : DATA LENGHT et DATA ne sont pas obligatoire pour les trames SET et DUMP
 *   0x04 : END FRAME : Cette valeur est connue et sera toujours la même pour terminer la transition de données.
 
  Elle correspond au caractère ASCII end of transmission (EOF)
+ 
+ ### Se familiariser avec la collection associative
+ 
+  Pour cette partie nous avons eu à realiser un programme qui cree une liste d'elements en fonction de la commande entrée au clavier, cette liste sera stockée et affichée par la   suite. 
+  si la commande entrée correspond à exit on sort du programme, dans ce cas aucune liste n'est generé.
+  si la commande entrée correspond à set on procède bien à la creation d'une liste d'elements à l'aide de la fonction <store> qui permet d'entrée une clef au clavier et affectée   à chaque clef une valeur en utilisant une liste de donnée de structure clé-valeur. 
+  si la commande entrée correspond à la commande lookup, on se met à la recherche d'un element à l'aide de la fonction <lookup> qui entre une clé au clavier qui normalement doit     correspondre à une valeur si elle existe dans la liste, au cas contraire elle retourne un message d'erreur "element non trouvé". 
+  si la commande entrée correspond à dump, nous avons dans ce cas la fonction <display> qui affiche la liste d'elements generée plus haut.
+ 
+ #### Assemblage des fonctionnalités
+ 
+
+ 
+  
+ 
