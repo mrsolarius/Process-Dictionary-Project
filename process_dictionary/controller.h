@@ -64,8 +64,6 @@ void launchPipes(int nbNodes, int * pipeCtrl, int** pipeArr);
  *      @param nbNodes correspond au nombre de noeud enfant à crée
  *      @param pipeCtrl correspond au pipe de communication avec le controller
  *      @param pipeArr correspond au pipe initialiser des lecture et d'écritures de chaque enfant
- * Erreurs :
- *      Peut renvoyer des erreur sur la fermetures des pipes
  */
 void freeNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
 

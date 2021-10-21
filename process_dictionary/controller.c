@@ -67,14 +67,8 @@ void launchPipes(int nbNodes, int *pipeCtrl, int **pipeArr){
 void freeNodes(int nbNodes, int *pipeCtrl, int **pipeArr) {
     //On libère du heap les tableaux et on attend les fis
     for (int i = 0; i < nbNodes; i++) {
-        if(close(pipeArr[i][0])==-1){
-            perror("controller.c::freeNodes() call close()");
-            exit(-1);
-        }
-        if(close(pipeArr[i][1])==-1){
-            perror("controller.c::freeNodes() call close()");
-            exit(-1);
-        };
+        close(pipeArr[i][0]);
+        close(pipeArr[i][1]);
         free(pipeArr[i]);
         wait(NULL);
     }
