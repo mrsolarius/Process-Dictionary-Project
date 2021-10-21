@@ -1,7 +1,3 @@
-//
-// Created by louis on 12/10/2021.
-//
-
 #ifndef PROCESS_DICTIONARY_PROJECT_TABLE_H
 #define PROCESS_DICTIONARY_PROJECT_TABLE_H
 

@@ -1,7 +1,3 @@
-//
-// Created by louis on 12/10/2021.
-//
-
 #include "table.h"
 #include <stdio.h>
 #include <stdlib.h>
