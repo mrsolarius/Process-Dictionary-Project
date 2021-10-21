@@ -24,6 +24,12 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Au moins 2 processus son requis\n");
         exit(-1);
     }
+    if(nbNodes>254){
+        //si on dépace les 254 processus on retombe sur 0 car le numéro du processus et stoker sur un char + 1 (pour être bien compté dans les strlen)
+        //Donc si on vient avec 0xff +1 pour le processus on tombe sur 0x00 donc on ne peut pas verifier que l'aquitement
+        fprintf(stderr, "Pas plus de 254 processus\n");
+        exit(-1);
+    }
     //Lancement du programme
     runController(nbNodes);
     return 0;

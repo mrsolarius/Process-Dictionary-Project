@@ -99,7 +99,7 @@ PAskFrame decodeAskFrame(unsigned char *frame) {
     return askFrame;
 }
 
-PAcquittalFrame decodeAcquittalFrame(unsigned char *frame) {
+PAcquittalFrame decodeAcquittalFrame(const unsigned char *frame, unsigned int frameLength) {
     //Definition de la structure renvoyer en cas d'erreur
     PAcquittalFrame error = (PAcquittalFrame) malloc(sizeof(AcquittalFrame));
     error->cmd = 0xff;
@@ -112,7 +112,6 @@ PAcquittalFrame decodeAcquittalFrame(unsigned char *frame) {
         return error;
     }
     PAcquittalFrame acquittalFrame = (PAcquittalFrame) malloc(sizeof(AcquittalFrame));
-    unsigned int frameLength = getCharLength(frame);
     //On teste la taille de la frame
     if (frameLength == 4) {
         switch (frame[0]) {

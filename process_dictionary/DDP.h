@@ -152,7 +152,7 @@ PAskFrame decodeAskFrame(unsigned char *frame);
  *      ENOENDFLAG  Aucun drapeau de fin de trame n'a était identifier
  *      ENOTDDP     Là chaine de character ne correspond pas au protocole DDP
  */
-PAcquittalFrame decodeAcquittalFrame(unsigned char *frame);
+PAcquittalFrame decodeAcquittalFrame(const unsigned char *frame, unsigned int frameLength);
 
 /**
  * Nom :

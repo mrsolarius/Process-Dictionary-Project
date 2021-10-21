@@ -6,7 +6,7 @@
 #define PROCESS_DICTIONARY_CONTROLLER_H
 
 #include "DDP.h"
-
+#include <stdbool.h>
 /**
  * Variable global permettant de savoir le nombre de trame d'acquittement lu depuis le précédent reset
  * Elle est utiliser notamment pour attendre toutes les trame d'acquittement d'un dump.
@@ -101,10 +101,11 @@ void askKey(unsigned char cmd,int * pipeCtrlWrite);
  *      à la fonction acquittalAction afin de les traiter convenablement.
  * Parameters :
  *      @param pipeCtrlRead correspond au pipe de lecture du controller
+ *      @param totalNodes correspond au nombre total de neud de l'app
  * Erreurs :
  *      Peut renvoyer deux erreurs différentes une erreur de lecture sur le pipe et une erreur de lecture de la trame
  */
-void readAcquittal(int *pipeCtrlRead);
+void readAcquittal(int *pipeCtrlRead,unsigned int totalNodes);
 
 /**
  * Nom :
@@ -149,19 +150,19 @@ int launchAsk(int * pipeCtrlWrite, unsigned char cmd, unsigned int val);
  * Parameters
  *      @param frameStream correspond à au tableau de unsigned char lu dans le pipe
  *      @param bufferSize correspond à la taille du buffer
+ *      @param totalNodes correspond au nombre total de neud de l'app
  * Return :
  *      @return Renvoie la structure de la première trame trouvée dans le flux
  */
-PAcquittalFrame deserialization(unsigned char * frameStream, unsigned int bufferSize);
+PAcquittalFrame deserialization(unsigned char * frameStream, unsigned int bufferSize, unsigned int totalNodes);
 
 /**
  *  Nom :
  *      acquittalAction - Permet de réagir aux d'acquittement trames reçu par le controller
  *  Description :
  *      En fonction des trame reçus on affichera les donnée dans la console sous une forme différent
- *  Parameters
+ *  Parameters :
  *      @param incomingAcquittal correspond au pointeur d'une trame d'acquittement
  */
 void acquittalAction(PAcquittalFrame incomingAcquittal);
-
 #endif //PROCESS_DICTIONARY_CONTROLLER_H
