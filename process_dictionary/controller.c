@@ -24,6 +24,8 @@ void runController(int nbNodes) {
     close(pipeCtrlWrite[0]);
     close(pipeCtrl[1]);
     cmdLauncher(nbNodes, pipeCtrlWrite, pipeCtrl);
+    close(pipeCtrlWrite[1]);
+    close(pipeCtrl[0]);
     freeNodes(nbNodes, pipeCtrl, pipeArr);
 }
 
@@ -44,17 +46,20 @@ void initPipes(int nbNodes, int *pipeCtrl, int **pipeArr) {
     }
 }
 
-void launchPipes(int nbNodes, int *pipeCtrlRead, int **pipeArr){
+void launchPipes(int nbNodes, int *pipeCtrl, int **pipeArr){
     for (int i = 0; i < nbNodes; i++) // Générer n node
     {
         //on ne s'occuper ici que des fis pour afficher leur pid et celui de leur père
-        if (fork() == 0) {
-            //printf("\nfork:%d",i);
+        int val = fork();
+        if (val == 0) {
             if (i == 0) {
-                runNode(i, nbNodes, pipeCtrlRead, pipeArr[nbNodes - 1], pipeArr[i]);
+                runNode(i, nbNodes, pipeCtrl, pipeArr[nbNodes - 1], pipeArr[i]);
             } else {
-                runNode(i, nbNodes, pipeCtrlRead, pipeArr[i - 1], pipeArr[i]);
+                runNode(i, nbNodes, pipeCtrl, pipeArr[i - 1], pipeArr[i]);
             }
+        }else if (val == -1){
+            perror("controller.c::launchPipes() call fork()");
+            exit(-1);
         }
     }
 }
@@ -62,6 +67,14 @@ void launchPipes(int nbNodes, int *pipeCtrlRead, int **pipeArr){
 void freeNodes(int nbNodes, int *pipeCtrl, int **pipeArr) {
     //On libère du heap les tableaux et on attend les fis
     for (int i = 0; i < nbNodes; i++) {
+        if(close(pipeArr[i][0])==-1){
+            perror("controller.c::freeNodes() call close()");
+            exit(-1);
+        }
+        if(close(pipeArr[i][1])==-1){
+            perror("controller.c::freeNodes() call close()");
+            exit(-1);
+        };
         free(pipeArr[i]);
         wait(NULL);
     }
