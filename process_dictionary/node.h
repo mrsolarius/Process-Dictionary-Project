@@ -1,7 +1,3 @@
-//
-// Created by louis on 17/10/2021.
-//
-
 #ifndef PROCESS_DICTIONARY_NODE_H
 #define PROCESS_DICTIONARY_NODE_H
 

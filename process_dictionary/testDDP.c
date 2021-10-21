@@ -1,7 +1,3 @@
-//
-// Created by louis on 16/10/2021.
-//
-
 #include "DDP.h"
 #include <stdio.h>
 #include <stdbool.h>

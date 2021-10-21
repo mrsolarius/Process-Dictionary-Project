@@ -1,7 +1,3 @@
-//
-// Created by louis on 13/10/2021.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "controller.h"
