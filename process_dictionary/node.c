@@ -28,7 +28,7 @@ void runNode(const int nodeID, int totalNode, int pipeCtr[2], int pipeRead[2], i
         switch (askFrame->cmd) {
             case C_SET:
                 if(askFrame->val%totalNode == nodeID){
-                    char *value = malloc(sizeof(char)*4000);
+                    char *value = malloc(sizeof(char)*4096);
                     printf("Saisir la valeur (chaine de characters):\n");
                     fgets(value, 4000, stdin);
                     if ((strlen(value) > 0) && (value[strlen (value) - 1] == '\n'))
@@ -102,7 +102,7 @@ int closePipes(int * pipeCtr, int * pipeRead, int * pipeWrite){
 }
 
 unsigned char * readFrame(int pipeRead[2]){
-    char nbBytes = 127;
+    unsigned int nbBytes = 4096;
     unsigned char * frame = malloc(sizeof (char)*nbBytes);
     long res=1;
     res = read(pipeRead[0], frame, nbBytes);

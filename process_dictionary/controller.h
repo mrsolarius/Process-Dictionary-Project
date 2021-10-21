@@ -7,26 +7,26 @@
 
 #include "DDP.h"
 
-int runController(int nbNodes);
+void runController(int nbNodes);
 
 void initPipes(int nbNodes, int * pipeCtrl, int** pipeArr);
 
 void launchPipes(int nbNodes, int * pipeCtrlRead, int** pipeArr);
 
-int freeNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
+void freeNodes(int nbNodes, int * pipeCtrl, int** pipeArr);
 
-int cmdLauncher(int nbNodes,int * pipeCtrlWrite,int * pipeCtrlRead);
+void cmdLauncher(int nbNodes,int * pipeCtrlWrite,int * pipeCtrlRead);
+
 void askKey(unsigned char cmd,int * pipeCtrlWrite);
 
 void readAcquittal(int *pipeCtrlRead);
 
 int launchExit(int * pipeCtrlWrite);
+
 int launchAsk(int * pipeCtrlWrite, unsigned char cmd, unsigned int val);
-void print_hex(const unsigned char *s);
-unsigned int getNbFrames(unsigned char * framesStream);
 
-PAcquittalFrame * deserialisation(unsigned char * frameStream, unsigned int bufferSize, unsigned int *lenghtFrame);
+PAcquittalFrame deserialization(unsigned char * frameStream, unsigned int bufferSize);
 
-unsigned char * substr(unsigned char *chaineSource,int pos,int len);
+void acquittalAction(PAcquittalFrame incomingAcquittal);
 
 #endif //PROCESS_DICTIONARY_CONTROLLER_H
