@@ -112,9 +112,14 @@ void cmdLauncher(int nbNodes, int *pipeCtrlWrite, int *pipeCtrlRead) {
 
 void askKey(unsigned char cmd,int * pipeCtrlWrite){
     unsigned int key;
+    long int value;
     //on demande à l'utilisateur de saisir une clef
     printf("Saisir la cle (decimal number): ");
-    scanf("%d", &key);
+    scanf("%ld", &value);
+    if(value<0)
+        printf("n'est pas un entier");
+    else
+        key=(unsigned int) value;
     //clef que l'on envoie avec la commande demander à la fonction launch ask
     launchAsk(pipeCtrlWrite, cmd, key);
 }
