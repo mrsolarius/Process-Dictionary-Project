@@ -18,6 +18,12 @@ Le programme comportera 4 fonctions destinées à l'utilisateur :
 
 Les processus doivent être capables de communiquer par tube entre eux, afin de pouvoir se transférer les bonnes informations jusqu'à ce que l'un d'entre eux soit en capacité de la traiter et pour finalement la transférer au processus père (le contrôleur).
 
+### Structure du projet
+* process_dictionary : Le projet principal celui présenté tous au long de ce document
+* project_0 : Test de création de N fils
+* project_1 : Test des pipes et envoie de valeur entre les N fils
+* test_table : Test des classes de stockage des données sous la forme du programme final sans multifils
+
 ## Conception
 
 Afin de répondre au besoin attendu par le cahier de charge (le sujet du TP), nous avons imaginé une structure applicative et de donnée permettant la communication entre les différents processus.
